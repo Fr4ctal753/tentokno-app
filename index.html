@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Конструктор Мягких Окон — ТЕНТОКНО</title>
+  
+  <!-- Иконка сайта (фавиконка) из вашего логотипа -->
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --panel-bg: #1e1e1e;
+      --accent-yellow: #ffcc00;
+      --accent-hover: #e6b800;
+      --text-light: #f5f5f5;
+      --text-muted: #aaaaaa;
+      --border-color: #333333;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    @keyframes shake-animation {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      50% { transform: translateX(4px); }
+      75% { transform: translateX(-4px); }
+      100% { transform: translateX(0); }
+    }
+    .shaking { animation: shake-animation 0.3s ease-in-out; }
+
+    header {
+      background-color: var(--panel-bg);
+      border-bottom: 2px solid var(--accent-yellow);
+      padding: 12px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 1rem;
+      color: var(--accent-yellow);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .app-container {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+    }
+
+    .sidebar {
+      width: 100%;
+      background-color: var(--panel-bg);
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-size: 0.8rem;
+      color: var(--accent-yellow);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 4px;
+      margin-top: 6px;
+    }
+
+    .window-selector {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+
+    .win-tab {
+      background: #2a2a2a;
+      border: 1px solid var(--border-color);
+      color: var(--text-light);
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .win-tab.active {
+      background: var(--accent-yellow);
+      color: #000;
+      border-color: var(--accent-yellow);
+    }
+
+    .btn-add {
+      background: transparent;
+      border: 1px dashed var(--accent-yellow);
+      color: var(--accent-yellow);
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .shape-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-shape {
+      flex: 1;
+      padding: 10px;
+      background: #2a2a2a;
+      border: 1px solid var(--border-color);
+      color: var(--text-light);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .btn-shape.active {
+      background: var(--accent-yellow);
+      color: #000;
+      font-weight: bold;
+    }
+
+    .inputs-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .header-fields-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .header-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: #252525;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .input-row label {
+      grid-column: span 2;
+      font-size: 0.85rem;
+      color: var(--accent-yellow);
+      font-weight: 600;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .input-group span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    input[type="text"], input[type="number"], select {
+      background: #121212;
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      width: 100%;
+    }
+
+    .multi-qty-box {
+      background: #252525;
+      padding: 12px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .photo-buttons-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .photo-buttons-group button {
+      flex: 1;
+    }
+
+    .photo-thumbnails {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 5px;
+    }
+
+    .thumb-wrapper {
+      position: relative;
+      aspect-ratio: 1;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .thumb-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .thumb-del {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: rgba(217, 83, 79, 0.9);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .btn-primary {
+      background: var(--accent-yellow);
+      color: #000;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+    }
+
+    .btn-secondary {
+      background: #333;
+      color: #fff;
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .btn-photo {
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      padding: 10px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .btn-camera {
+      background: #27ae60;
+      color: #fff;
+      border: none;
+      padding: 10px 8px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .btn-delete-all-photos {
+      background: #d9534f;
+      color: #fff;
+      border: none;
+      padding: 8px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+
+    .btn-danger {
+      background: #2a2a2a;
+      color: #ff5252;
+      border: 1px solid #444;
+      padding: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+    }
+
+    .workspace {
+      display: none;
+      background: #0d0d0d;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 15px 5px;
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    .workspace.visible {
+      display: flex;
+    }
+
+    #pdf-document-wrapper {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: transparent;
+    }
+
+    #pdf-container {
+      width: 100%;
+      background-color: #fff;
+      position: relative;
+      box-sizing: border-box;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+    }
+
+    .pdf-page-block {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      page-break-after: always;
+      break-after: page;
+    }
+
+    .pdf-photo-page {
+      width: 100%;
+      height: 1120px;
+      background: #fff;
+      box-sizing: border-box;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      page-break-before: always;
+      break-before: page;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .pdf-photo-page h3 {
+      font-family: Arial, sans-serif;
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 16px;
+      border-bottom: 2px solid #ffcc00;
+      padding-bottom: 6px;
+      width: 100%;
+    }
+
+    .pdf-photo-page .photo-container-render {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .pdf-photo-page img {
+      max-width: 100%;
+      max-height: 900px;
+      object-fit: contain;
+      border: 1px solid #ccc;
+    }
+
+    @media (min-width: 900px) {
+      body {
+        height: 100vh;
+        overflow: hidden;
+      }
+      .app-container {
+        flex-direction: row;
+        overflow: hidden;
+      }
+      .sidebar {
+        width: 380px;
+        height: 100%;
+        overflow-y: auto;
+        border-right: 1px solid var(--border-color);
+      }
+      .workspace {
+        display: flex !important;
+        flex: 1;
+        height: 100%;
+        overflow: auto;
+        padding: 15px;
+      }
+      #pdf-container {
+        width: 800px;
+      }
+      .pdf-photo-page {
+        width: 800px;
+      }
+      .btn-toggle-preview {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>ТЕНТОКНО — Замер</h1>
+    <span id="window-counter-info" style="color: var(--text-muted); font-size: 0.85rem;">Бланк №1</span>
+  </header>
+
+  <div class="app-container">
+    <div class="sidebar">
+
+      <div class="section-title">Список сохраненных бланков</div>
+      <div class="window-selector" id="tabs-container"></div>
+
+      <div class="section-title">Данные договора и замера</div>
+      <div class="header-fields-grid">
+        <div class="header-row-2">
+          <div class="input-group">
+            <span>№ Договора</span>
+            <input type="text" id="header-contract" placeholder="№ 12/08" oninput="updateHeaderData()">
+          </div>
+          <div class="input-group">
+            <span>Дата</span>
+            <input type="text" id="header-date" placeholder="06.08.2026" oninput="updateHeaderData()">
+          </div>
+        </div>
+        
+        <div class="input-group">
+          <span>ФИО Заказчика</span>
+          <input type="text" id="header-client-name" placeholder="Петров П.П." oninput="updateHeaderData()">
+        </div>
+        <div class="header-row-2">
+          <div class="input-group">
+            <span>Телефон заказчика</span>
+            <input type="text" id="header-client-phone" placeholder="+7 (999) 123-45-67" oninput="updateHeaderData()">
+          </div>
+          <div class="input-group">
+            <span>ФИО Замерщика</span>
+            <input type="text" id="header-inspector" placeholder="Иванов И.И." oninput="updateHeaderData()">
+          </div>
+        </div>
+        <div class="input-group">
+          <span>Адрес объекта</span>
+          <input type="text" id="header-client-address" placeholder="г. Владикавказ, ул. Мира, д. 10" oninput="updateHeaderData()">
+        </div>
+        
+        <div class="header-row-2">
+          <div class="input-group">
+            <span>Итого площадь проемов (м²)</span>
+            <input type="text" id="header-area" placeholder="2.00" readonly style="background-color: #222; color: var(--accent-yellow); font-weight: bold;">
+          </div>
+          <div class="input-group">
+            <span>Молнии (м.п.)</span>
+            <input type="text" id="header-zippers" placeholder="4" oninput="updateHeaderData()">
+          </div>
+        </div>
+        <div class="header-row-2">
+          <div class="input-group">
+            <span>Монтаж внахлест</span>
+            <select id="header-overlap" onchange="updateHeaderData()">
+              <option value="да">да</option>
+              <option value="нет">нет</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <span>Ремешки (шт)</span>
+            <input type="text" id="header-straps" placeholder="12" oninput="updateHeaderData()">
+          </div>
+        </div>
+        <div class="input-group">
+          <span>Точки крепления</span>
+          <input type="text" id="header-fasteners" placeholder="Люверсы / скобы" oninput="updateHeaderData()">
+        </div>
+        <div class="header-row-2">
+          <div class="input-group">
+            <span>Цвет окантовки</span>
+            <input type="text" id="header-color" placeholder="Коричневый" oninput="updateHeaderData()">
+          </div>
+          <div class="input-group">
+            <span>Комментарии (макс 190 симв.)</span>
+            <input type="text" id="header-weights" placeholder="Важные примечания..." maxlength="190" oninput="updateHeaderData()">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Окон на бланке (макс. 6)</div>
+      <div class="multi-qty-box">
+        <span style="font-size: 0.9rem; color: #fff;">Количество (1-6):</span>
+        <input type="number" id="group-qty-input" min="1" max="6" value="1" style="width: 70px; text-align: center;" onchange="updateGroupQty(this.value)">
+      </div>
+
+      <div class="section-title">Выбор окна для настройки</div>
+      <div class="window-selector" id="sub-tabs-container"></div>
+
+      <div class="section-title">Форма текущего проема</div>
+      <div class="shape-btn-group">
+        <button class="btn-shape" id="btn-shape-3" onclick="setShape(3)">3 Угла</button>
+        <button class="btn-shape active" id="btn-shape-4" onclick="setShape(4)">4 Угла</button>
+        <button class="btn-shape" id="btn-shape-5" onclick="setShape(5)">5 Углов</button>
+      </div>
+
+      <div class="section-title">Размеры проема и канта (мм)</div>
+      <div class="inputs-grid" id="inputs-container"></div>
+
+      <div class="section-title">Фотографии объекта (макс. 10)</div>
+      
+      <div class="photo-buttons-group">
+        <button class="btn-photo" onclick="document.getElementById('photo-gallery-input').click()">🖼️ ИЗ ГАЛЕРЕИ</button>
+        <button class="btn-camera" onclick="document.getElementById('photo-camera-input').click()">📷 СДЕЛАТЬ ФОТО</button>
+      </div>
+
+      <input type="file" id="photo-gallery-input" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)">
+      <input type="file" id="photo-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this)">
+      
+      <button class="btn-delete-all-photos" onclick="deleteAllPhotos(this)">🗑️ Удалить все фото</button>
+      
+      <div class="photo-thumbnails" id="photo-thumbs-container"></div>
+
+      <div class="actions">
+        <button class="btn-secondary btn-toggle-preview" id="preview-btn" onclick="shakeAndTogglePreview(this)">👁️ Предпросмотр бланка</button>
+        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Отправить PDF (WhatsApp/TG)</button>
+        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Скачать PDF</button>
+        <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
+      </div>
+
+    </div>
+
+    <div class="workspace" id="workspace-area">
+      <div id="pdf-document-wrapper">
+        <div id="pdf-container" class="pdf-page-block">
+          <canvas id="blankCanvas" width="800" height="1130"></canvas>
+        </div>
+        <div id="pdf-photos-list-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const MAX_WINDOWS_PER_BLANK = 6;
+    const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
+    const DB_KEY = 'tentokno_ultimate_gallery_db_v24';
+    const LAST_INDEX_KEY = 'tentokno_ultimate_gallery_idx_v24';
+
+    function createDefaultWindowItem() {
+      return {
+        shape: 4,
+        sides: [1000, 1500, 1000, 1500],
+        cants: [50, 50, 50, 50]
+      };
+    }
+
+    let groupsData = [];
+    let currentGroupIndex = 0;
+    let currentSubWindowIndex = 0;
+
+    const canvas = document.getElementById('blankCanvas');
+    const ctx = canvas.getContext('2d');
+
+    window.onload = () => {
+      const savedData = localStorage.getItem(DB_KEY);
+      if (savedData) {
+        try { groupsData = JSON.parse(savedData); } catch(e) { groupsData = []; }
+      }
+      
+      if (!groupsData || groupsData.length === 0) {
+        groupsData = [{
+          uid: 1,
+          headerInfo: {
+            contract: '', date: '', inspector: '', calculatedArea: 2.0, zippers: '',
+            overlap: 'да', fasteners: '', color: '', weights: '', straps: '',
+            clientName: '', clientPhone: '', clientAddress: ''
+          },
+          windows: [ createDefaultWindowItem() ],
+          photos: []
+        }];
+        saveToDB();
+      }
+
+      const savedLastIndex = localStorage.getItem(LAST_INDEX_KEY);
+      if (savedLastIndex !== null) {
+        let parsedIndex = parseInt(savedLastIndex);
+        if (parsedIndex >= 0 && parsedIndex < groupsData.length) { currentGroupIndex = parsedIndex; }
+        else { currentGroupIndex = groupsData.length - 1; }
+      } else {
+        currentGroupIndex = groupsData.length - 1;
+      }
+
+      calculateBlankArea();
+      renderGroupTabs();
+      renderSubTabs();
+      loadHeaderInputs();
+      renderInputs();
+      renderPhotos();
+      draw();
+    };
+
+    function saveToDB() {
+      try {
+        localStorage.setItem(DB_KEY, JSON.stringify(groupsData));
+        localStorage.setItem(LAST_INDEX_KEY, currentGroupIndex);
+      } catch (err) {
+        console.error("Ошибка сохранения в localStorage:", err);
+      }
+    }
+
+    function deleteAllPhotos(btn) {
+      groupsData[currentGroupIndex].photos = [];
+      saveToDB();
+      renderPhotos();
+      draw();
+      btn.classList.add('shaking');
+      setTimeout(() => btn.classList.remove('shaking'), 300);
+    }
+
+    function shakeAndTogglePreview(btn) {
+      btn.classList.add('shaking');
+      renderPhotos();
+      draw();
+      setTimeout(() => {
+        btn.classList.remove('shaking');
+        togglePreview();
+      }, 300);
+    }
+
+    function shakeAndExportPDF(btn) {
+      btn.classList.add('shaking');
+      renderPhotos();
+      draw();
+      setTimeout(() => {
+        btn.classList.remove('shaking');
+        exportToPDF();
+      }, 300);
+    }
+
+    function shakeAndSharePDF(btn) {
+      btn.classList.add('shaking');
+      renderPhotos();
+      draw();
+      setTimeout(() => {
+        btn.classList.remove('shaking');
+        sharePDF();
+      }, 300);
+    }
+
+    function togglePreview() {
+      const ws = document.getElementById('workspace-area');
+      ws.classList.toggle('visible');
+      if (ws.classList.contains('visible')) {
+        ws.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function handlePhotoUpload(input) {
+      if (!input.files || input.files.length === 0) return;
+      
+      const currentGroup = groupsData[currentGroupIndex];
+      if (!currentGroup.photos) currentGroup.photos = [];
+
+      const files = Array.from(input.files);
+
+      files.forEach(file => {
+        if (currentGroup.photos.length >= 10) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const maxDim = 800;
+            let w = img.width;
+            let h = img.height;
+            
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+              else { w = Math.round((w * maxDim) / h); h = maxDim; }
+            }
+
+            const compCanvas = document.createElement('canvas');
+            compCanvas.width = w;
+            compCanvas.height = h;
+            const compCtx = compCanvas.getContext('2d');
+            compCtx.drawImage(img, 0, 0, w, h);
+            
+            const compressedBase64 = compCanvas.toDataURL('image/jpeg', 0.6);
+            
+            if (currentGroup.photos.length < 10) {
+              currentGroup.photos.push(compressedBase64);
+              saveToDB();
+              renderPhotos();
+              draw();
+            }
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      input.value = "";
+    }
+
+    function deletePhoto(photoIdx) {
+      groupsData[currentGroupIndex].photos.splice(photoIdx, 1);
+      saveToDB();
+      renderPhotos();
+      draw();
+    }
+
+    function renderPhotos() {
+      const currentGroup = groupsData[currentGroupIndex];
+      if (!currentGroup.photos) currentGroup.photos = [];
+
+      const thumbContainer = document.getElementById('photo-thumbs-container');
+      thumbContainer.innerHTML = '';
+      currentGroup.photos.forEach((base64, idx) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'thumb-wrapper';
+        wrap.innerHTML = `
+          <img src="${base64}" onerror="this.style.display='none'">
+          <button class="thumb-del" onclick="deletePhoto(${idx})">×</button>
+        `;
+        thumbContainer.appendChild(wrap);
+      });
+
+      const pdfPhotosContainer = document.getElementById('pdf-photos-list-container');
+      pdfPhotosContainer.innerHTML = '';
+      currentGroup.photos.forEach((base64, idx) => {
+        const photoPage = document.createElement('div');
+        photoPage.className = 'pdf-photo-page'; 
+        photoPage.innerHTML = `
+          <h3>Приложение к Бланку №${currentGroup.uid} — Фото объекта №${idx + 1}</h3>
+          <div class="photo-container-render">
+            <img src="${base64}">
+          </div>
+        `;
+        pdfPhotosContainer.appendChild(photoPage);
+      });
+    }
+
+    function renderGroupTabs() {
+      const container = document.getElementById('tabs-container');
+      container.innerHTML = '';
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'btn-add';
+      addBtn.innerText = '+ Новый бланк';
+      addBtn.onclick = addNewGroup;
+      container.appendChild(addBtn);
+
+      groupsData.forEach((group, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `win-tab ${idx === currentGroupIndex ? 'active' : ''}`;
+        btn.innerText = `Бланк №${group.uid}`;
+        btn.onclick = () => switchGroup(idx);
+        container.appendChild(btn);
+      });
+
+      document.getElementById('window-counter-info').innerText = `Бланк №${groupsData[currentGroupIndex].uid}`;
+    }
+
+    function switchGroup(index) {
+      currentGroupIndex = index;
+      currentSubWindowIndex = 0;
+      calculateBlankArea();
+      renderGroupTabs();
+      renderSubTabs();
+      loadHeaderInputs();
+      renderInputs();
+      renderPhotos();
+      saveToDB();
+      draw();
+    }
+
+    function addNewGroup() {
+      let maxUid = 0;
+      groupsData.forEach(g => { if(g.uid > maxUid) maxUid = g.uid; });
+      const nextUid = maxUid + 1;
+
+      groupsData.push({
+        uid: nextUid,
+        headerInfo: {
+          contract: '', date: '', inspector: '', calculatedArea: 2.0, zippers: '',
+          overlap: 'да', fasteners: '', color: '', weights: '', straps: '',
+          clientName: '', clientPhone: '', clientAddress: ''
+        },
+        windows: [createDefaultWindowItem()],
+        photos: []
+      });
+      currentGroupIndex = groupsData.length - 1;
+      saveToDB();
+      switchGroup(currentGroupIndex);
+    }
+
+    function deleteCurrentBlank() {
+      if (groupsData.length === 1) {
+        alert("Должен остаться хотя бы один бланк!");
+        return;
+      }
+      if(!confirm("Удалить этот бланк?")) return;
+      
+      groupsData.splice(currentGroupIndex, 1);
+      if (currentGroupIndex >= groupsData.length) currentGroupIndex = groupsData.length - 1;
+      saveToDB();
+      switchGroup(currentGroupIndex);
+    }
+
+    function loadHeaderInputs() {
+      const info = groupsData[currentGroupIndex].headerInfo;
+      document.getElementById('header-contract').value = info.contract || '';
+      document.getElementById('header-date').value = info.date || '';
+      document.getElementById('header-inspector').value = info.inspector || '';
+      document.getElementById('header-area').value = info.calculatedArea.toFixed(2);
+      document.getElementById('header-zippers').value = info.zippers || '';
+      document.getElementById('header-overlap').value = info.overlap || 'да';
+      document.getElementById('header-fasteners').value = info.fasteners || '';
+      document.getElementById('header-color').value = info.color || '';
+      document.getElementById('header-weights').value = info.weights || '';
+      document.getElementById('header-straps').value = info.straps || '';
+      
+      document.getElementById('header-client-name').value = info.clientName || '';
+      document.getElementById('header-client-phone').value = info.clientPhone || '';
+      document.getElementById('header-client-address').value = info.clientAddress || '';
+    }
+
+    function updateHeaderData() {
+      const info = groupsData[currentGroupIndex].headerInfo;
+      info.contract = document.getElementById('header-contract').value;
+      info.date = document.getElementById('header-date').value;
+      info.inspector = document.getElementById('header-inspector').value;
+      info.zippers = document.getElementById('header-zippers').value;
+      info.overlap = document.getElementById('header-overlap').value;
+      info.fasteners = document.getElementById('header-fasteners').value;
+      info.color = document.getElementById('header-color').value;
+      info.weights = document.getElementById('header-weights').value;
+      info.straps = document.getElementById('header-straps').value;
+      
+      info.clientName = document.getElementById('header-client-name').value;
+      info.clientPhone = document.getElementById('header-client-phone').value;
+      info.clientAddress = document.getElementById('header-client-address').value;
+      
+      saveToDB();
+      draw();
+    }
+
+    function calculateBlankArea() {
+      const windows = groupsData[currentGroupIndex].windows;
+      let totalArea = 0;
+
+      windows.forEach(win => {
+        let width = 0;
+        let height = 0;
+
+        if (win.shape === 3) {
+          const a = win.sides[0];
+          const b = win.sides[1];
+          const c = win.sides[2];
+          width = Math.max(a, b, c);
+          height = Math.max(a, b, c) * 0.866; 
+        } 
+        else if (win.shape === 4) {
+          width = Math.max(win.sides[0], win.sides[2]);
+          height = Math.max(win.sides[1], win.sides[3]);
+        } 
+        else if (win.shape === 5) {
+          const maxSide = Math.max(...win.sides);
+          width = maxSide * 1.2;
+          height = maxSide * 1.2;
+        }
+
+        let winAreaM2 = (width / 1000) * (height / 1000);
+        if (winAreaM2 < 2.0) { winAreaM2 = 2.0; }
+        totalArea += winAreaM2;
+      });
+
+      groupsData[currentGroupIndex].headerInfo.calculatedArea = totalArea;
+      const areaInput = document.getElementById('header-area');
+      if (areaInput) {
+        areaInput.value = totalArea.toFixed(2);
+      }
+    }
+
+    function updateGroupQty(val) {
+      let qty = Math.max(1, Math.min(MAX_WINDOWS_PER_BLANK, parseInt(val) || 1));
+      let currentWinArray = groupsData[currentGroupIndex].windows;
+
+      while (currentWinArray.length < qty) {
+        currentWinArray.push(createDefaultWindowItem());
+      }
+      if (currentWinArray.length > qty) {
+        currentWinArray.splice(qty);
+      }
+
+      if (currentSubWindowIndex >= qty) {
+        currentSubWindowIndex = qty - 1;
+      }
+
+      calculateBlankArea();
+      renderSubTabs();
+      renderInputs();
+      saveToDB();
+      draw();
+    }
+
+    function renderSubTabs() {
+      const container = document.getElementById('sub-tabs-container');
+      container.innerHTML = '';
+      const currentWinArray = groupsData[currentGroupIndex].windows;
+
+      document.getElementById('group-qty-input').value = currentWinArray.length;
+
+      currentWinArray.forEach((_, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `win-tab ${idx === currentSubWindowIndex ? 'active' : ''}`;
+        btn.innerText = `Окно ${idx + 1}`;
+        btn.onclick = () => switchSubWindow(idx);
+        container.appendChild(btn);
+      });
+    }
+
+    function switchSubWindow(subIdx) {
+      currentSubWindowIndex = subIdx;
+      renderSubTabs();
+      renderInputs();
+      draw();
+    }
+
+    document.fonts.ready.then(() => { draw(); });
+
+    function setShape(shapeCount) {
+      const activeWindow = groupsData[currentGroupIndex].windows[currentSubWindowIndex];
+      activeWindow.shape = shapeCount;
+
+      while (activeWindow.sides.length < shapeCount) {
+        activeWindow.sides.push(1000);
+        activeWindow.cants.push(50);
+      }
+      activeWindow.sides = activeWindow.sides.slice(0, shapeCount);
+      activeWindow.cants = activeWindow.cants.slice(0, shapeCount);
+
+      calculateBlankArea();
+      renderInputs();
+      saveToDB();
+      draw();
+    }
+
+    function renderInputs() {
+      const container = document.getElementById('inputs-container');
+      container.innerHTML = '';
+
+      const activeWindow = groupsData[currentGroupIndex].windows[currentSubWindowIndex];
+
+      document.querySelectorAll('.btn-shape').forEach(b => b.classList.remove('active'));
+      document.getElementById(`btn-shape-${activeWindow.shape}`).classList.add('active');
+
+      for (let i = 0; i < activeWindow.shape; i++) {
+        const row = document.createElement('div');
+        row.className = 'input-row';
+        row.innerHTML = `
+          <label>${SIDE_NAMES[i]}</label>
+          <div class="input-group">
+            <span>Проем (мм)</span>
+            <input type="number" value="${activeWindow.sides[i]}" onchange="updateValue('sides', ${i}, this.value)">
+          </div>
+          <div class="input-group">
+            <span>Кант (мм)</span>
+            <input type="number" value="${activeWindow.cants[i]}" onchange="updateValue('cants', ${i}, this.value)">
+          </div>
+        `;
+        container.appendChild(row);
+      }
+    }
+
+    function updateValue(type, index, val) {
+      const parsedVal = Math.max(0, parseFloat(val) || 0);
+      groupsData[currentGroupIndex].windows[currentSubWindowIndex][type][index] = parsedVal;
+      calculateBlankArea();
+      saveToDB();
+      draw();
+    }
+
+    function buildProperOffsetPoints(innerPoints, cants, scale) {
+      const count = innerPoints.length;
+      let lines = [];
+
+      for (let i = 0; i < count; i++) {
+        let p1 = innerPoints[i];
+        let p2 = innerPoints[(i + 1) % count];
+        let cant = cants[i] || 50;
+        let offsetDist = cant * scale;
+
+        let dx = p2.x - p1.x;
+        let dy = p2.y - p1.y;
+        let len = Math.sqrt(dx * dx + dy * dy) || 1;
+
+        let nx = -dy / len;
+        let ny = dx / len;
+
+        let cx = innerPoints.reduce((acc, p) => acc + p.x, 0) / count;
+        let cy = innerPoints.reduce((acc, p) => acc + p.y, 0) / count;
+        let mx = (p1.x + p2.x) / 2;
+        let my = (p1.y + p2.y) / 2;
+        if ((mx - cx) * nx + (my - cy) * ny < 0) { nx = -nx; ny = -ny; }
+
+        lines.push({
+          p1: { x: p1.x + nx * offsetDist, y: p1.y + ny * offsetDist },
+          p2: { x: p2.x + nx * offsetDist, y: p2.y + ny * offsetDist }
+        });
+      }
+
+      let outerPoints = [];
+      for (let i = 0; i < count; i++) {
+        let l1 = lines[(i - 1 + count) % count];
+        let l2 = lines[i];
+        let pt = getLinesIntersection(l1.p1, l1.p2, l2.p1, l2.p2);
+        if (!pt) { pt = { x: l2.p1.x, y: l2.p1.y }; }
+        outerPoints.push(pt);
+      }
+      return outerPoints;
+    }
+
+    function getLinesIntersection(p1, p2, p3, p4) {
+      let d = (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+      if (Math.abs(d) < 0.000001) return null;
+      let t = ((p1.x - p3.x) * (p3.y - p4.y) - (p1.y - p3.y) * (p3.x - p4.x)) / d;
+      return {
+        x: p1.x + t * (p2.x - p1.x),
+        y: p1.y + t * (p2.y - p1.y)
+      };
+    }
+
+    // Разбиение текста комментариев ровно на строчки без обрезания (максимум 2 строки, ширина увеличена в ~1.5 раза)
+    function wrapTextToTwoLines(text, maxLineWidth, font) {
+      ctx.font = font;
+      if (!text || text.trim() === '') return [];
+
+      let words = text.trim().split(' ');
+      let lines = [];
+      let currentLine = '';
+
+      for (let i = 0; i < words.length; i++) {
+        let testLine = currentLine === '' ? words[i] : currentLine + ' ' + words[i];
+        if (ctx.measureText(testLine).width <= maxLineWidth) {
+          currentLine = testLine;
+        } else {
+          if (currentLine !== '') {
+            lines.push(currentLine);
+            currentLine = words[i];
+          } else {
+            lines.push(words[i]);
+            currentLine = '';
+          }
+        }
+      }
+      if (currentLine !== '') {
+        lines.push(currentLine);
+      }
+
+      if (lines.length > 2) {
+        let firstTwo = lines.slice(0, 2);
+        let line2 = firstTwo[1];
+        while (ctx.measureText(line2 + '...').width > maxLineWidth && line2.length > 0) {
+          line2 = line2.slice(0, -1);
+        }
+        firstTwo[1] = line2 + '...';
+        return firstTwo;
+      }
+
+      return lines;
+    }
+
+    function draw() {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 32px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('ТЕНТОКНО', 25, 48);
+
+      ctx.font = '12px Arial';
+      ctx.fillText('ООО «УЮТ» ИНН 1513072813 г. Владикавказ, ул. Пожарского д 43', 215, 36);
+      ctx.fillText('т. +7-928-857-77-53   tentokno@gmail.com', 215, 54);
+      
+      ctx.font = 'bold 14px Arial';
+      ctx.textAlign = 'right';
+      ctx.fillText(`Бланк № ${groupsData[currentGroupIndex].uid}`, 775, 25);
+
+      const h = groupsData[currentGroupIndex].headerInfo;
+      ctx.textAlign = 'left';
+      ctx.font = '13px Arial';
+
+      let contractTxt = h.contract ? h.contract : '_____________________';
+      let dateTxt = h.date ? h.date : '____________________________';
+      ctx.fillText(`Бланк заказа к договору № ${contractTxt} от ${dateTxt}`, 25, 88);
+
+      let clientNameTxt = h.clientName ? h.clientName : '____________________________________________________';
+      let clientPhoneTxt = h.clientPhone ? h.clientPhone : '_________________________';
+      ctx.fillText(`Заказчик (ФИО): ${clientNameTxt}   Тел: ${clientPhoneTxt}`, 25, 110);
+
+      let clientAddressTxt = h.clientAddress ? h.clientAddress : '____________________________________________________________________________';
+      ctx.fillText(`Адрес объекта: ${clientAddressTxt}`, 25, 132);
+
+      let inspectorTxt = h.inspector ? h.inspector : '____________________________________________________________________________';
+      ctx.fillText(`Замерщик: ${inspectorTxt}`, 25, 154);
+
+      let areaTxt = h.calculatedArea.toFixed(2);
+      let zipsTxt = h.zippers ? h.zippers : '______';
+      let overlapTxt = h.overlap === 'нет' ? '  нет  ' : '  да  ';
+      ctx.fillText(`Общая площадь проемов: ${areaTxt} м²    Молнии: ${zipsTxt} м.п.    Монтаж внахлест [ ${overlapTxt} ]`, 25, 176);
+
+      let fastTxt = h.fasteners ? h.fasteners : '__________________________________________________________________';
+      ctx.fillText(`Тип точки креплений: ${fastTxt}`, 25, 198);
+
+      let colorTxt = h.color ? h.color : '___________________________';
+      let strapsTxt = h.straps ? h.straps : '___________';
+      
+      ctx.fillText(`Цвет окантовки: ${colorTxt}   Ремешки: ${strapsTxt} шт.`, 25, 220);
+      
+      // Увеличенная ширина строки комментариев (в полтора раза шире прежнего, аккуратно до границы чертежа)
+      let commentLines = wrapTextToTwoLines(h.weights, 670, '13px Arial');
+      let actualGridTop = 262;
+      let gridHeight = 708;
+
+      if (commentLines.length > 0) {
+        ctx.fillText(`Комментарии: ${commentLines[0]}`, 25, 238);
+        if (commentLines.length > 1) {
+          ctx.fillText(commentLines[1], 115, 254);
+          actualGridTop = 278;
+          gridHeight = 692;
+        }
+      } else {
+        ctx.fillText(`Комментарии:`, 25, 238);
+      }
+
+      const gridLeft = 25;
+      const gridWidth = 750;
+      const step = 25;
+
+      ctx.strokeStyle = '#d5d5d5';
+      ctx.lineWidth = 0.5;
+
+      for (let x = gridLeft; x <= gridLeft + gridWidth; x += step) {
+        ctx.beginPath(); ctx.moveTo(x, actualGridTop); ctx.lineTo(x, actualGridTop + gridHeight); ctx.stroke();
+      }
+      for (let y = actualGridTop; y <= actualGridTop + gridHeight; y += step) {
+        ctx.beginPath(); ctx.moveTo(gridLeft, y); ctx.lineTo(gridLeft + gridWidth, y); ctx.stroke();
+      }
+
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(gridLeft, actualGridTop, gridWidth, gridHeight);
+
+      const windowsList = groupsData[currentGroupIndex].windows;
+      const qty = windowsList.length;
+
+      let cols = 1, rows = 1;
+      if (qty === 2) { cols = 2; rows = 1; }
+      else if (qty <= 4) { cols = 2; rows = 2; }
+      else { cols = 3; rows = 2; }
+
+      const cellW = gridWidth / cols;
+      const cellH = gridHeight / rows;
+
+      for (let q = 0; q < qty; q++) {
+        let r = Math.floor(q / cols);
+        let c = q % cols;
+
+        let winItem = windowsList[q];
+        let count = winItem.shape;
+        let sides = winItem.sides;
+        let cants = winItem.cants;
+
+        let cx = gridLeft + c * cellW + cellW / 2;
+        let cy = actualGridTop + r * cellH + cellH / 2 + 15;
+
+        let maxSide = Math.max(...sides, 100);
+        
+        let scaleMultiplier = qty === 1 ? 0.44 : (qty === 2 ? 0.39 : 0.34);
+        let scale = (Math.min(cellW, cellH) * scaleMultiplier) / maxSide;
+
+        let innerPoints = [];
+
+        if (count === 3) {
+          let top = sides[0] * scale;
+          let right = sides[1] * scale;
+          let left = sides[2] * scale;
+          innerPoints = [
+            { x: cx, y: cy - top / 2 },
+            { x: cx + right / 2, y: cy + top / 2 },
+            { x: cx - left / 2, y: cy + top / 2 }
+          ];
+        } else if (count === 4) {
+          let top = sides[0] * scale;
+          let right = sides[1] * scale;
+          let bottom = sides[2] * scale;
+          let left = sides[3] * scale;
+          innerPoints = [
+            { x: cx - top / 2, y: cy - left / 2 },
+            { x: cx + top / 2, y: cy - right / 2 },
+            { x: cx + bottom / 2, y: cy + right / 2 },
+            { x: cx - bottom / 2, y: cy + left / 2 }
+          ];
+        } else if (count === 5) {
+          let radius = maxSide * scale * 0.65;
+          for (let i = 0; i < count; i++) {
+            let angle = (Math.PI / 2) - i * (2 * Math.PI / count);
+            innerPoints.push({
+              x: cx + Math.cos(angle) * radius,
+              y: cy - Math.sin(angle) * radius
+            });
+          }
+        }
+
+        let outerPoints = buildProperOffsetPoints(innerPoints, cants, scale);
+
+        ctx.beginPath();
+        ctx.moveTo(outerPoints[0].x, outerPoints[0].y);
+        for (let i = 1; i < count; i++) ctx.lineTo(outerPoints[i].x, outerPoints[i].y);
+        ctx.closePath();
+        ctx.fillStyle = (q === currentSubWindowIndex) ? 'rgba(255, 204, 0, 0.4)' : 'rgba(0, 0, 0, 0.06)'; 
+        ctx.fill();
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        ctx.moveTo(innerPoints[0].x, innerPoints[0].y);
+        for (let i = 1; i < count; i++) ctx.lineTo(innerPoints[i].x, innerPoints[i].y);
+        ctx.closePath();
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2.0;
+        ctx.stroke();
+
+        ctx.font = 'bold 11px Arial';
+
+        for (let i = 0; i < count; i++) {
+          let p1 = innerPoints[i];
+          let p2 = innerPoints[(i + 1) % count];
+
+          let mx = (p1.x + p2.x) / 2;
+          let my = (p1.y + p2.y) / 2;
+
+          let dx = p2.x - p1.x;
+          let dy = p2.y - p1.y;
+          let len = Math.sqrt(dx * dx + dy * dy) || 1;
+          let nx = -dy / len;
+          let ny = dx / len;
+
+          let cxAll = innerPoints.reduce((acc, p) => acc + p.x, 0) / count;
+          let cyAll = innerPoints.reduce((acc, p) => acc + p.y, 0) / count;
+          if (nx * (mx - cxAll) + ny * (my - cyAll) < 0) { nx = -nx; ny = -ny; }
+
+          let labelDist = qty === 1 ? 55 : 45; 
+          let labelX = mx + nx * labelDist;
+          let labelY = my + ny * labelDist;
+
+          let text1 = `${sides[i]} мм`;
+          let text2 = `к: ${cants[i]}`;
+
+          ctx.textAlign = 'center';
+
+          let boxW = 75;
+          let boxH = 26;
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+          ctx.fillRect(labelX - boxW/2, labelY - boxH/2, boxW, boxH);
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 0.8;
+          ctx.strokeRect(labelX - boxW/2, labelY - boxH/2, boxW, boxH);
+
+          ctx.fillStyle = '#000000';
+          ctx.fillText(text1, labelX, labelY - 2);
+          ctx.fillText(text2, labelX, labelY + 9);
+        }
+
+        ctx.fillStyle = (q === currentSubWindowIndex) ? '#e6b800' : '#000000';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Изделие № ${q + 1}`, cx, cy - cellH / 2 + 25);
+      }
+
+      ctx.fillStyle = '#000000';
+      ctx.font = '11px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('Заказчик согласовал принципиальную схему установки мягких окон, согласно бланку заказа и', 25, 995);
+      ctx.fillText('осведомлен о технических особенностях изготовления изделий (максимальная ширина пленки', 25, 1010);
+      ctx.fillText('1,8м, если габариты превышают эту ширину, то производится спайка пленки внахлест)', 25, 1025);
+
+      ctx.font = 'bold 13px Arial';
+      ctx.fillText('Подпись заказчика _________________________', 25, 1075);
+    }
+
+    function getPdfOptions() {
+      return {
+        margin: 0,
+        filename: `Бланк_Замера_ТЕНТОКНО_№${groupsData[currentGroupIndex].uid}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowWidth: 800 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'] }
+      };
+    }
+
+    function exportToPDF() {
+      renderPhotos();
+      const element = document.getElementById('pdf-document-wrapper');
+      const opt = getPdfOptions();
+      
+      html2pdf().set(opt).from(element).save().catch(err => {
+        html2pdf().set(opt).from(element).outputPdf('bloburl').then(pdfUrl => {
+          window.open(pdfUrl, '_blank');
+        });
+      });
+    }
+
+    async function sharePDF() {
+      renderPhotos();
+      const element = document.getElementById('pdf-document-wrapper');
+      const opt = getPdfOptions();
+
+      try {
+        const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+        const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `Бланк замера №${groupsData[currentGroupIndex].uid}`,
+            text: 'Отправляю бланк замера мягких окон TENTOKNO'
+          });
+        } else {
+          html2pdf().set(opt).from(element).outputPdf('bloburl').then(pdfUrl => {
+            window.open(pdfUrl, '_blank');
+          });
+        }
+      } catch (err) {
+        console.error(err);
+        exportToPDF();
+      }
+    }
+  </script>
+</body>
+</html>
