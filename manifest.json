@@ -7,6 +7,12 @@
   "background_color": "#121212",
   "theme_color": "#ffcc00",
   "description": "Профессиональный конструктор замера мягких окон",
+  "icons": [
+    {
+      "src": "photo_2026-04-17_19-51-33.jpg",
+      "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any maskable"
     }
+  ]
+}
