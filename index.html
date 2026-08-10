@@ -4,8 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Конструктор Мягких Окон — ТЕНТОКНО</title>
+  <link rel="manifest" href="manifest.json">
   
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
+
+  <!-- Библиотеки pdfmake и html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     :root {
@@ -210,17 +216,27 @@
       justify-content: space-between;
     }
 
-    .btn-photo-unified {
+    .photo-buttons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-photo-action {
       background: #27ae60;
       color: #fff;
       border: none;
-      padding: 12px;
+      padding: 12px 6px;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       text-transform: uppercase;
-      width: 100%;
+      text-align: center;
+    }
+
+    .btn-photo-action.gallery {
+      background: #2980b9;
     }
 
     .photo-thumbnails {
@@ -282,18 +298,28 @@
       font-size: 0.9rem;
     }
 
+    .btn-secondary {
+      background: #333;
+      color: #fff;
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
     .btn-delete-all-photos {
-      background: #2a2a2a;
-      color: #ff5252;
-      border: 1px solid #444;
-      padding: 10px;
+      background: #d9534f;
+      color: #fff;
+      border: none;
+      padding: 8px;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
       font-size: 0.8rem;
       text-transform: uppercase;
       margin-top: 5px;
-      width: 100%;
     }
 
     .btn-danger {
@@ -306,70 +332,6 @@
       font-weight: bold;
       font-size: 0.9rem;
       text-transform: uppercase;
-    }
-
-    /* Модальное окно просмотра и сохранения бланка */
-    #export-modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.9);
-      z-index: 9999;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 10px;
-    }
-    #export-modal.active { display: flex; }
-    .modal-content {
-      background: #1e1e1e;
-      border: 2px solid var(--accent-yellow);
-      border-radius: 10px;
-      max-width: 500px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 12px;
-      gap: 10px;
-      max-height: 92vh;
-    }
-    .modal-img-container {
-      width: 100%;
-      overflow-y: auto;
-      max-height: 65vh;
-      background: #fff;
-      border-radius: 6px;
-    }
-    .modal-img-container img {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-    .modal-btn-download {
-      background: var(--accent-yellow);
-      color: #000;
-      border: none;
-      padding: 12px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      text-transform: uppercase;
-      font-size: 0.9rem;
-      text-align: center;
-      text-decoration: none;
-      display: block;
-      width: 100%;
-    }
-    .modal-close {
-      background: #2a2a2a;
-      color: #fff;
-      border: 1px solid #444;
-      padding: 10px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      text-transform: uppercase;
-      font-size: 0.85rem;
     }
 
     .workspace {
@@ -432,18 +394,6 @@
   </style>
 </head>
 <body>
-
-  <!-- Модальное окно для надежного скачивания бланка и фотографий -->
-  <div id="export-modal">
-    <div class="modal-content">
-      <div style="font-size: 0.85rem; color: var(--accent-yellow); font-weight: bold; text-align: center;">Бланк готов! Нажмите кнопку ниже для сохранения:</div>
-      <div class="modal-img-container">
-        <img id="modal-result-img" alt="Бланк">
-      </div>
-      <a id="download-file-link" class="modal-btn-download" download="blank.jpg">💾 СКАЧАТЬ ФАЙЛ НА ТЕЛЕФОН</a>
-      <button class="modal-close" onclick="closeModal()">Закрыть</button>
-    </div>
-  </div>
 
   <header>
     <h1>ТЕНТОКНО — Мобильный замер</h1>
@@ -548,15 +498,21 @@
 
       <div class="section-title">Фотографии объекта (макс. 10)</div>
       
-      <button class="btn-photo-unified" onclick="document.getElementById('photo-unified-input').click()">📷 ДОБАВИТЬ ФОТО</button>
-      <input type="file" id="photo-unified-input" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)">
+      <div class="photo-buttons-grid">
+        <button class="btn-photo-action" onclick="document.getElementById('photo-camera-input').click()">📸 Сделать фото</button>
+        <button class="btn-photo-action gallery" onclick="document.getElementById('photo-gallery-input').click()">🖼️ Из галереи</button>
+      </div>
+
+      <input type="file" id="photo-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this)">
+      <input type="file" id="photo-gallery-input" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)">
       
       <button class="btn-delete-all-photos" onclick="deleteAllPhotos(this)">🗑️ Удалить все фото</button>
       
       <div class="photo-thumbnails" id="photo-thumbs-container"></div>
 
       <div class="actions">
-        <button class="btn-primary" onclick="shakeAndShowModal(this)">📥 СКАЧАТЬ БЛАНК (ФОТО)</button>
+        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Переслать PDF</button>
+        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Скачать PDF</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -575,8 +531,8 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_webview_img_v6';
-    const LAST_INDEX_KEY = 'tentokno_webview_idx_v6';
+    const DB_KEY = 'tentokno_hybrid_pdf_db_v34';
+    const LAST_INDEX_KEY = 'tentokno_hybrid_pdf_idx_v34';
 
     function createDefaultWindowItem() {
       return {
@@ -649,29 +605,24 @@
       setTimeout(() => btn.classList.remove('shaking'), 300);
     }
 
-    function shakeAndShowModal(btn) {
+    function shakeAndExportPDF(btn) {
       btn.classList.add('shaking');
       renderPhotos();
       draw();
       setTimeout(() => {
         btn.classList.remove('shaking');
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-        const currentGroup = groupsData[currentGroupIndex];
-        const contractName = currentGroup.headerInfo.contract ? `_${currentGroup.headerInfo.contract}` : '';
-        const fileName = `Blank_${currentGroup.uid}${contractName}.jpg`;
-
-        document.getElementById('modal-result-img').src = dataUrl;
-        
-        const dlLink = document.getElementById('download-file-link');
-        dlLink.href = dataUrl;
-        dlLink.download = fileName;
-
-        document.getElementById('export-modal').classList.add('active');
+        generateDownloadPDF();
       }, 300);
     }
 
-    function closeModal() {
-      document.getElementById('export-modal').classList.remove('active');
+    function shakeAndSharePDF(btn) {
+      btn.classList.add('shaking');
+      renderPhotos();
+      draw();
+      setTimeout(() => {
+        btn.classList.remove('shaking');
+        generateSharePDF();
+      }, 300);
     }
 
     function handlePhotoUpload(input) {
@@ -689,7 +640,7 @@
         reader.onload = function(e) {
           const img = new Image();
           img.onload = function() {
-            const maxDim = 900;
+            const maxDim = 800;
             let w = img.width;
             let h = img.height;
             
@@ -704,7 +655,7 @@
             const compCtx = compCanvas.getContext('2d');
             compCtx.drawImage(img, 0, 0, w, h);
             
-            const compressedBase64 = compCanvas.toDataURL('image/jpeg', 0.65);
+            const compressedBase64 = compCanvas.toDataURL('image/jpeg', 0.6);
             
             if (currentGroup.photos.length < 10) {
               currentGroup.photos.push(compressedBase64);
@@ -1313,6 +1264,103 @@
 
       ctx.font = 'bold 13px Arial';
       ctx.fillText('Подпись заказчика _________________________', 25, 1075);
+    }
+
+    // Кнопка скачивания через .download()
+    async function generateDownloadPDF() {
+      renderPhotos();
+      
+      const blankDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      
+      const contentStack = [
+        { image: blankDataUrl, width: 515, alignment: 'center' }
+      ];
+
+      const currentGroup = groupsData[currentGroupIndex];
+      if (currentGroup.photos && currentGroup.photos.length > 0) {
+        currentGroup.photos.forEach((photoBase64, idx) => {
+          contentStack.push({ text: '', pageBreak: 'before' });
+          contentStack.push({
+            text: `Приложение к Бланку №${currentGroup.uid} — Фото объекта №${idx + 1}`,
+            fontSize: 14,
+            bold: true,
+            margin: [0, 0, 0, 15]
+          });
+          contentStack.push({
+            image: photoBase64,
+            fit: [515, 700],
+            alignment: 'center'
+          });
+        });
+      }
+
+      const docDefinition = {
+        pageSize: 'A4',
+        pageMargins: [40, 40, 40, 40],
+        content: contentStack
+      };
+
+      const blankUid = currentGroup.uid;
+      const fileName = `Blank_${blankUid}.pdf`;
+
+      pdfMake.createPdf(docDefinition).download(fileName);
+    }
+
+    // Кнопка пересылки/поделиться (через Web Share API или нативный .open если не поддерживается)
+    async function generateSharePDF() {
+      renderPhotos();
+      
+      const blankDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      
+      const contentStack = [
+        { image: blankDataUrl, width: 515, alignment: 'center' }
+      ];
+
+      const currentGroup = groupsData[currentGroupIndex];
+      if (currentGroup.photos && currentGroup.photos.length > 0) {
+        currentGroup.photos.forEach((photoBase64, idx) => {
+          contentStack.push({ text: '', pageBreak: 'before' });
+          contentStack.push({
+            text: `Приложение к Бланку №${currentGroup.uid} — Фото объекта №${idx + 1}`,
+            fontSize: 14,
+            bold: true,
+            margin: [0, 0, 0, 15]
+          });
+          contentStack.push({
+            image: photoBase64,
+            fit: [515, 700],
+            alignment: 'center'
+          });
+        });
+      }
+
+      const docDefinition = {
+        pageSize: 'A4',
+        pageMargins: [40, 40, 40, 40],
+        content: contentStack
+      };
+
+      const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+
+      pdfDocGenerator.getBlob(async (blob) => {
+        const file = new File([blob], `Blank_${currentGroup.uid}.pdf`, { type: 'application/pdf' });
+        
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: `Бланк замера №${currentGroup.uid}`,
+              text: 'Мягкие окна - Бланк заказа'
+            });
+            return;
+          } catch (err) {
+            if (err.name !== 'AbortError') console.error("Ошибка при отправке:", err);
+          }
+        }
+        
+        // Фолбэк: если शेयर недоступен, открываем в новой вкладке
+        pdfDocGenerator.open();
+      });
     }
   </script>
 </body>
