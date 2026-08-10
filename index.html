@@ -1339,23 +1339,30 @@
       };
     }
 
-    // Надежное скачивание PDF через встроенный метод .save() без всплывающих диалогов
+    // ИСПРАВЛЕНО: Прямое скачивание без диалоговых окон
     function exportToPDF() {
       renderPhotos();
       const element = document.getElementById('pdf-document-wrapper');
       const opt = getPdfOptions();
       
-      html2pdf().set(opt).from(element).save();
+      html2pdf().set(opt).from(element).output('blob').then((pdfBlob) => {
+        const blob = new Blob([pdfBlob], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = opt.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
     }
 
-    // Надежная отправка PDF: сохраняет файл и открывает вкладку предварительного просмотра/печати, откуда его легко переслать в мессенджеры
+    // ИСПРАВЛЕНО: Мгновенный вызов нативного меню отправки (WhatsApp, Telegram и т.д.)
     async function sharePDF() {
       renderPhotos();
       const element = document.getElementById('pdf-document-wrapper');
       const opt = getPdfOptions();
 
       try {
-        // Сначала пробуем нативный шэринг файлов, если поддерживается мобильным браузером
         const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
         const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
 
@@ -1363,16 +1370,15 @@
           await navigator.share({
             files: [file],
             title: `Бланк заказа №${groupsData[currentGroupIndex].uid}`,
-            text: 'Отправляю бланк замера мягких окон TENTOKNO'
+            text: 'Бланк замера мягких окон TENTOKNO'
           });
         } else {
-          // Если устройство не поддерживает прямую передачу файла, скачиваем его и открываем для отправки
-          html2pdf().set(opt).from(element).outputPdf('bloburl').then(pdfUrl => {
-            window.open(pdfUrl, '_blank');
-          });
+          // Запасной вариант для ПК или старых браузеров: открытие PDF в новой вкладке
+          const pdfUrl = URL.createObjectURL(pdfBlob);
+          window.open(pdfUrl, '_blank');
         }
       } catch (err) {
-        console.error("Ошибка при отправке PDF:", err);
+        console.error("Ошибка при отправке:", err);
         exportToPDF();
       }
     }
