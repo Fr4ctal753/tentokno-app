@@ -6,12 +6,10 @@
   <title>Конструктор Мягких Окон — ТЕНТОКНО</title>
   <link rel="manifest" href="manifest.json">
   
-  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
 
-  <!-- Подключаем pdfmake и шрифты к нему для надежной генерации PDF прямо в памяти -->
-  <script src="https://cdnjs.cloudflare.com/ajax5/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-  <!-- Подключаем html2canvas для отрисовки графики в PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
@@ -325,7 +323,6 @@
       text-transform: uppercase;
     }
 
-    /* Всегда показываем рабочую область на телефонах внизу (или скрываем по кнопке предпросмотра) */
     .workspace {
       display: flex;
       background: #0d0d0d;
@@ -505,7 +502,6 @@
 
     </div>
 
-    <!-- Скрытая/видимая область для генерации через html2canvas -->
     <div class="workspace" id="workspace-area">
       <div id="pdf-document-wrapper">
         <div id="pdf-container">
@@ -519,8 +515,8 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_hybrid_pdf_db_v28';
-    const LAST_INDEX_KEY = 'tentokno_hybrid_pdf_idx_v28';
+    const DB_KEY = 'tentokno_hybrid_pdf_db_v29';
+    const LAST_INDEX_KEY = 'tentokno_hybrid_pdf_idx_v29';
 
     function createDefaultWindowItem() {
       return {
@@ -1254,21 +1250,16 @@
       ctx.fillText('Подпись заказчика _________________________', 25, 1075);
     }
 
-    // ГИБРИДНЫЙ МЕХАНИЗМ (Комбинация Варианта 1 и Варианта 2):
-    // 1. Отрисовка через html2canvas в картинку высокого разрешения.
-    // 2. Сборка идеального PDF-документа программным методом через библиотеку pdfmake (внутренние потоки).
-    // 3. Прямая выдача файла на скачивание или отправку без сбоев WebView.
+    // Улучшенная функция генерации и сохранения/отправки PDF без диалога "Save As"
     async function generateHybridPDF(actionType) {
       renderPhotos();
       
-      // Шаг 1: Конвертируем главный холст бланка в Image DataURL
       const blankDataUrl = canvas.toDataURL('image/jpeg', 0.95);
       
       const contentStack = [
         { image: blankDataUrl, width: 515, alignment: 'center' }
       ];
 
-      // Шаг 2: Добавляем фотографии объекта, если они есть
       const currentGroup = groupsData[currentGroupIndex];
       if (currentGroup.photos && currentGroup.photos.length > 0) {
         currentGroup.photos.forEach((photoBase64, idx) => {
@@ -1287,7 +1278,6 @@
         });
       }
 
-      // Шаг 3: Собираем документ через pdfmake (Вариант 1)
       const docDefinition = {
         pageSize: 'A4',
         pageMargins: [40, 40, 40, 40],
@@ -1295,21 +1285,23 @@
       };
 
       const blankUid = currentGroup.uid;
-      const fileName = `Бланк_${blankUid}.pdf`;
+      const fileName = `Blank_${blankUid}.pdf`;
 
       pdfMake.createPdf(docDefinition).getBlob(async (pdfBlob) => {
         if (actionType === 'download') {
-          // Вариант 2 / Прямое сохранение через Blob URL
+          // Использование надежного механизма сохранения с принудительным указанием имени файла для мобильных браузеров
           const url = URL.createObjectURL(pdfBlob);
           const link = document.createElement('a');
           link.href = url;
           link.download = fileName;
+          link.style.display = 'none';
           document.body.appendChild(link);
           link.click();
-          document.body.removeChild(link);
-          URL.revokeObjectURL(url);
+          setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }, 1000);
         } else if (actionType === 'share') {
-          // Отправка через системный Web Share API (WhatsApp, Telegram и т.д.)
           const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
@@ -1320,7 +1312,6 @@
               });
             } catch (err) {
               if (err.name !== 'AbortError') {
-                // Если сброшено, фоллибэк на скачивание
                 pdfMake.createPdf(docDefinition).download(fileName);
               }
             }
