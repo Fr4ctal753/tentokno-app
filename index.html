@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.json">
   
   <!-- Иконка сайта (фавиконка) из вашего логотипа -->
-  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -293,28 +293,17 @@
       font-size: 0.9rem;
     }
 
-    .btn-photo {
-      background: #4a90e2;
-      color: #fff;
-      border: none;
-      padding: 10px 8px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-    }
-
-    .btn-camera {
+    .btn-photo-unified {
       background: #27ae60;
       color: #fff;
       border: none;
-      padding: 10px 8px;
+      padding: 12px;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       text-transform: uppercase;
+      width: 100%;
     }
 
     .btn-delete-all-photos {
@@ -561,18 +550,14 @@
         <button class="btn-shape" id="btn-shape-5" onclick="setShape(5)">5 Углов</button>
       </div>
 
-      <div class="section-title">Размеры проема и канта (мм)</div>
+      <div class="section-title">Размеры проема и канта (см)</div>
       <div class="inputs-grid" id="inputs-container"></div>
 
       <div class="section-title">Фотографии объекта (макс. 10)</div>
       
-      <div class="photo-buttons-group">
-        <button class="btn-photo" onclick="document.getElementById('photo-gallery-input').click()">🖼️ ИЗ ГАЛЕРЕИ</button>
-        <button class="btn-camera" onclick="document.getElementById('photo-camera-input').click()">📷 СДЕЛАТЬ ФОТО</button>
-      </div>
-
-      <input type="file" id="photo-gallery-input" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)">
-      <input type="file" id="photo-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this)">
+      <!-- Объединенная кнопка добавления фото -->
+      <button class="btn-photo-unified" onclick="document.getElementById('photo-unified-input').click()">📷 ДОБАВИТЬ ФОТО</button>
+      <input type="file" id="photo-unified-input" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)">
       
       <button class="btn-delete-all-photos" onclick="deleteAllPhotos(this)">🗑️ Удалить все фото</button>
       
@@ -600,14 +585,14 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_ultimate_gallery_db_v24';
-    const LAST_INDEX_KEY = 'tentokno_ultimate_gallery_idx_v24';
+    const DB_KEY = 'tentokno_ultimate_gallery_db_v25';
+    const LAST_INDEX_KEY = 'tentokno_ultimate_gallery_idx_v25';
 
     function createDefaultWindowItem() {
       return {
         shape: 4,
-        sides: [1000, 1500, 1000, 1500],
-        cants: [50, 50, 50, 50]
+        sides: [100, 150, 100, 150], // По умолчанию в сантиметрах (например 100 см и 150 см)
+        cants: [5, 5, 5, 5]
       };
     }
 
@@ -927,7 +912,8 @@
           height = maxSide * 1.2;
         }
 
-        let winAreaM2 = (width / 1000) * (height / 1000);
+        // Перевод сантиметров в метры для расчета площади: (см / 100) * (см / 100)
+        let winAreaM2 = (width / 100) * (height / 100);
         if (winAreaM2 < 2.0) { winAreaM2 = 2.0; }
         totalArea += winAreaM2;
       });
@@ -991,8 +977,8 @@
       activeWindow.shape = shapeCount;
 
       while (activeWindow.sides.length < shapeCount) {
-        activeWindow.sides.push(1000);
-        activeWindow.cants.push(50);
+        activeWindow.sides.push(100);
+        activeWindow.cants.push(5);
       }
       activeWindow.sides = activeWindow.sides.slice(0, shapeCount);
       activeWindow.cants = activeWindow.cants.slice(0, shapeCount);
@@ -1018,11 +1004,11 @@
         row.innerHTML = `
           <label>${SIDE_NAMES[i]}</label>
           <div class="input-group">
-            <span>Проем (мм)</span>
+            <span>Проем (см)</span>
             <input type="number" value="${activeWindow.sides[i]}" onchange="updateValue('sides', ${i}, this.value)">
           </div>
           <div class="input-group">
-            <span>Кант (мм)</span>
+            <span>Кант (см)</span>
             <input type="number" value="${activeWindow.cants[i]}" onchange="updateValue('cants', ${i}, this.value)">
           </div>
         `;
@@ -1045,7 +1031,7 @@
       for (let i = 0; i < count; i++) {
         let p1 = innerPoints[i];
         let p2 = innerPoints[(i + 1) % count];
-        let cant = cants[i] || 50;
+        let cant = cants[i] || 5;
         let offsetDist = cant * scale;
 
         let dx = p2.x - p1.x;
@@ -1059,6 +1045,7 @@
         let cy = innerPoints.reduce((acc, p) => acc + p.y, 0) / count;
         let mx = (p1.x + p2.x) / 2;
         let my = (p1.y + p2.y) / 2;
+
         if ((mx - cx) * nx + (my - cy) * ny < 0) { nx = -nx; ny = -ny; }
 
         lines.push({
@@ -1088,7 +1075,6 @@
       };
     }
 
-    // Разбиение текста комментариев ровно на строчки без обрезания (максимум 2 строки, ширина увеличена в ~1.5 раза)
     function wrapTextToTwoLines(text, maxLineWidth, font) {
       ctx.font = font;
       if (!text || text.trim() === '') return [];
@@ -1176,7 +1162,6 @@
       
       ctx.fillText(`Цвет окантовки: ${colorTxt}   Ремешки: ${strapsTxt} шт.`, 25, 220);
       
-      // Увеличенная ширина строки комментариев (в полтора раза шире прежнего, аккуратно до границы чертежа)
       let commentLines = wrapTextToTwoLines(h.weights, 670, '13px Arial');
       let actualGridTop = 262;
       let gridHeight = 708;
@@ -1233,7 +1218,7 @@
         let cx = gridLeft + c * cellW + cellW / 2;
         let cy = actualGridTop + r * cellH + cellH / 2 + 15;
 
-        let maxSide = Math.max(...sides, 100);
+        let maxSide = Math.max(...sides, 10);
         
         let scaleMultiplier = qty === 1 ? 0.44 : (qty === 2 ? 0.39 : 0.34);
         let scale = (Math.min(cellW, cellH) * scaleMultiplier) / maxSide;
@@ -1318,7 +1303,7 @@
           let labelX = mx + nx * labelDist;
           let labelY = my + ny * labelDist;
 
-          let text1 = `${sides[i]} мм`;
+          let text1 = `${sides[i]} см`;
           let text2 = `к: ${cants[i]}`;
 
           ctx.textAlign = 'center';
@@ -1348,7 +1333,7 @@
       ctx.textAlign = 'left';
       ctx.fillText('Заказчик согласовал принципиальную схему установки мягких окон, согласно бланку заказа и', 25, 995);
       ctx.fillText('осведомлен о технических особенностях изготовления изделий (максимальная ширина пленки', 25, 1010);
-      ctx.fillText('1,8м, если габариты превышают эту ширину, то производится спайка пленки внахлест)', 25, 1025);
+      ctx.fillText('180см, если габариты превышают эту ширину, то производится спайка пленки внахлест)', 25, 1025);
 
       ctx.font = 'bold 13px Arial';
       ctx.fillText('Подпись заказчика _________________________', 25, 1075);
@@ -1401,15 +1386,6 @@
         console.error(err);
         exportToPDF();
       }
-    }
-  </script>
-<script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then((reg) => console.log('Service Worker зарегистрирован!', reg))
-          .catch((err) => console.log('Ошибка регистрации SW:', err));
-      });
     }
   </script>
 </body>
