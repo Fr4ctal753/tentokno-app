@@ -6,9 +6,10 @@
   <title>Конструктор Мягких Окон — ТЕНТОКНО</title>
   <link rel="manifest" href="manifest.json">
   
-  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- Подключаем html2canvas для превращения бланка в картинку высокого качества -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
     :root {
@@ -347,8 +348,6 @@
       background-color: #fff;
       position: relative;
       box-sizing: border-box;
-      page-break-inside: avoid;
-      break-inside: avoid;
     }
 
     canvas {
@@ -358,25 +357,14 @@
       max-width: 100%;
     }
 
-    .pdf-page-block {
-      page-break-inside: avoid;
-      break-inside: avoid;
-      page-break-after: always;
-      break-after: page;
-    }
-
     .pdf-photo-page {
       width: 100%;
-      height: 1120px;
       background: #fff;
       box-sizing: border-box;
       padding: 40px;
+      margin-top: 20px;
       display: flex;
       flex-direction: column;
-      page-break-before: always;
-      break-before: page;
-      page-break-inside: avoid;
-      break-inside: avoid;
     }
 
     .pdf-photo-page h3 {
@@ -391,7 +379,6 @@
 
     .pdf-photo-page .photo-container-render {
       width: 100%;
-      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -404,25 +391,6 @@
       max-height: 900px;
       object-fit: contain;
       border: 1px solid #ccc;
-    }
-
-    /* Настройка стилей специально для печати / сохранения в PDF */
-    @media print {
-      body {
-        background-color: #fff !important;
-        color: #000 !important;
-      }
-      header, .sidebar {
-        display: none !important;
-      }
-      .workspace {
-        display: block !important;
-        padding: 0 !important;
-        background: #fff !important;
-      }
-      #pdf-document-wrapper {
-        max-width: 100% !important;
-      }
     }
 
     @media (min-width: 900px) {
@@ -573,8 +541,8 @@
 
       <div class="actions">
         <button class="btn-secondary btn-toggle-preview" id="preview-btn" onclick="shakeAndTogglePreview(this)">👁️ Предпросмотр бланка</button>
-        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Отправить / Сохранить PDF</button>
-        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">🖨️ Печать / Сохранить PDF</button>
+        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndShareImage(this)">📲 Отправить бланк (WhatsApp/TG)</button>
+        <button class="btn-secondary" onclick="shakeAndDownloadImage(this)">💾 Скачать бланк (Картинка)</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -582,7 +550,7 @@
 
     <div class="workspace" id="workspace-area">
       <div id="pdf-document-wrapper">
-        <div id="pdf-container" class="pdf-page-block">
+        <div id="pdf-container">
           <canvas id="blankCanvas" width="800" height="1130"></canvas>
         </div>
         <div id="pdf-photos-list-container"></div>
@@ -593,8 +561,8 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_ultimate_gallery_db_v25';
-    const LAST_INDEX_KEY = 'tentokno_ultimate_gallery_idx_v25';
+    const DB_KEY = 'tentokno_ultimate_gallery_db_v26';
+    const LAST_INDEX_KEY = 'tentokno_ultimate_gallery_idx_v26';
 
     function createDefaultWindowItem() {
       return {
@@ -677,23 +645,23 @@
       }, 300);
     }
 
-    function shakeAndExportPDF(btn) {
+    function shakeAndDownloadImage(btn) {
       btn.classList.add('shaking');
       renderPhotos();
       draw();
       setTimeout(() => {
         btn.classList.remove('shaking');
-        exportToPDF();
+        downloadImage();
       }, 300);
     }
 
-    function shakeAndSharePDF(btn) {
+    function shakeAndShareImage(btn) {
       btn.classList.add('shaking');
       renderPhotos();
       draw();
       setTimeout(() => {
         btn.classList.remove('shaking');
-        sharePDF();
+        shareImage();
       }, 300);
     }
 
@@ -1346,20 +1314,69 @@
       ctx.fillText('Подпись заказчика _________________________', 25, 1075);
     }
 
-    // ИСПРАВЛЕНО (Вариант А): Нативная печать телефона через window.print()
-    function exportToPDF() {
+    // РАБОЧЕЕ РЕШЕНИЕ: Рендеринг бланка в качественную картинку через html2canvas
+    async function generateImageBlob() {
       renderPhotos();
-      const ws = document.getElementById('workspace-area');
-      ws.classList.add('visible');
+      const element = document.getElementById('pdf-document-wrapper');
       
-      setTimeout(() => {
-        window.print();
-      }, 300);
+      // Временно показываем рабочую область, чтобы html2canvas мог её прочитать
+      const ws = document.getElementById('workspace-area');
+      const wasVisible = ws.classList.contains('visible');
+      if (!wasVisible) ws.classList.add('visible');
+
+      const canvasResult = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      if (!wasVisible) ws.classList.remove('visible');
+
+      return new Promise((resolve) => {
+        canvasResult.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/jpeg', 0.95);
+      });
     }
 
-    // Резервный вызов шаринга/печати
-    async function sharePDF() {
-      exportToPDF();
+    // Скачивание картинки
+    async function downloadImage() {
+      const blob = await generateImageBlob();
+      const blankUid = groupsData[currentGroupIndex].uid;
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Бланк_${blankUid}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // Отправка картинки в WhatsApp / Telegram / Почту через системное меню «Поделиться»
+    async function shareImage() {
+      const blob = await generateImageBlob();
+      const blankUid = groupsData[currentGroupIndex].uid;
+      const file = new File([blob], `Бланк_${blankUid}.jpg`, { type: 'image/jpeg' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: `Бланк заказа №${blankUid}`,
+            text: 'Бланк замера мягких окон TENTOKNO'
+          });
+        } catch (err) {
+          if (err.name !== 'AbortError') {
+            downloadImage();
+          }
+        }
+      } else {
+        // Если устройство не поддерживает веб-шаринг файлов, просто скачиваем картинку
+        downloadImage();
+      }
     }
   </script>
 </body>
