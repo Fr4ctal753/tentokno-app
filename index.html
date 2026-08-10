@@ -496,8 +496,7 @@
       <div class="photo-thumbnails" id="photo-thumbs-container"></div>
 
       <div class="actions">
-        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Переслать PDF</button>
-        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Скачать PDF</button>
+        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndOpenPDF(this)">📲 Открыть / Сформировать PDF</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -516,8 +515,8 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_app_pdf_db_v1';
-    const LAST_INDEX_KEY = 'tentokno_app_pdf_idx_v1';
+    const DB_KEY = 'tentokno_webview_pdf_db_v1';
+    const LAST_INDEX_KEY = 'tentokno_webview_pdf_idx_v1';
 
     function createDefaultWindowItem() {
       return {
@@ -590,23 +589,55 @@
       setTimeout(() => btn.classList.remove('shaking'), 300);
     }
 
-    function shakeAndExportPDF(btn) {
+    // Железобетонный метод для WebView: открываем PDF через Data URI в новом контексте/окне
+    function shakeAndOpenPDF(btn) {
       btn.classList.add('shaking');
       renderPhotos();
       draw();
       setTimeout(() => {
         btn.classList.remove('shaking');
-        generateDownloadPDF();
-      }, 300);
-    }
+        
+        const currentGroup = groupsData[currentGroupIndex];
+        const blankDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        
+        const contentStack = [
+          { image: blankDataUrl, width: 515, alignment: 'center' }
+        ];
 
-    function shakeAndSharePDF(btn) {
-      btn.classList.add('shaking');
-      renderPhotos();
-      draw();
-      setTimeout(() => {
-        btn.classList.remove('shaking');
-        generateSharePDF();
+        if (currentGroup.photos && currentGroup.photos.length > 0) {
+          currentGroup.photos.forEach((photoBase64, idx) => {
+            contentStack.push({ text: '', pageBreak: 'before' });
+            contentStack.push({
+              text: `Приложение к Бланку №${currentGroup.uid} — Фото объекта №${idx + 1}`,
+              fontSize: 14,
+              bold: true,
+              margin: [0, 0, 0, 15]
+            });
+            contentStack.push({
+              image: photoBase64,
+              fit: [515, 700],
+              alignment: 'center'
+            });
+          });
+        }
+
+        const docDefinition = {
+          pageSize: 'A4',
+          pageMargins: [40, 40, 40, 40],
+          content: contentStack
+        };
+
+        // Генерация и принудительный вывод в Data URL для WebView
+        pdfMake.createPdf(docDefinition).getDataUrl((dataUrl) => {
+          const win = window.open();
+          if (win) {
+            win.document.write(`<iframe src="${dataUrl}" frameborder="0" style="border:0; top:0; left:0; bottom:0; right:0; width:100%; height:100%;" allowfullscreen></iframe>`);
+          } else {
+            // Если блокируется всплывающее окно, пробуем прямой переход
+            window.location.href = dataUrl;
+          }
+        });
+
       }, 300);
     }
 
@@ -1249,70 +1280,6 @@
 
       ctx.font = 'bold 13px Arial';
       ctx.fillText('Подпись заказчика _________________________', 25, 1075);
-    }
-
-    function buildPdfDefinition() {
-      renderPhotos();
-      const blankDataUrl = canvas.toDataURL('image/jpeg', 0.95);
-      
-      const contentStack = [
-        { image: blankDataUrl, width: 515, alignment: 'center' }
-      ];
-
-      const currentGroup = groupsData[currentGroupIndex];
-      if (currentGroup.photos && currentGroup.photos.length > 0) {
-        currentGroup.photos.forEach((photoBase64, idx) => {
-          contentStack.push({ text: '', pageBreak: 'before' });
-          contentStack.push({
-            text: `Приложение к Бланку №${currentGroup.uid} — Фото объекта №${idx + 1}`,
-            fontSize: 14,
-            bold: true,
-            margin: [0, 0, 0, 15]
-          });
-          contentStack.push({
-            image: photoBase64,
-            fit: [515, 700],
-            alignment: 'center'
-          });
-        });
-      }
-
-      return {
-        pageSize: 'A4',
-        pageMargins: [40, 40, 40, 40],
-        content: contentStack
-      };
-    }
-
-    function generateDownloadPDF() {
-      const docDefinition = buildPdfDefinition();
-      const currentGroup = groupsData[currentGroupIndex];
-      pdfMake.createPdf(docDefinition).download(`Blank_${currentGroup.uid}.pdf`);
-    }
-
-    async function generateSharePDF() {
-      const docDefinition = buildPdfDefinition();
-      const currentGroup = groupsData[currentGroupIndex];
-      const pdfDocGenerator = pdfMake.createPdf(docDefinition);
-
-      pdfDocGenerator.getBlob(async (blob) => {
-        const file = new File([blob], `Blank_${currentGroup.uid}.pdf`, { type: 'application/pdf' });
-        
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: `Бланк замера №${currentGroup.uid}`,
-              text: 'Мягкие окна - Бланк заказа'
-            });
-            return;
-          } catch (err) {
-            if (err.name !== 'AbortError') console.error("Ошибка при отправке:", err);
-          }
-        }
-        
-        pdfDocGenerator.open();
-      });
     }
   </script>
 </body>
