@@ -496,8 +496,8 @@
       <div class="photo-thumbnails" id="photo-thumbs-container"></div>
 
       <div class="actions">
-        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Сформировать PDF</button>
-        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Сформировать PDF</button>
+        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Скачать PDF</button>
+        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Скачать PDF</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -1251,7 +1251,7 @@
       ctx.fillText('Подпись заказчика _________________________', 25, 1075);
     }
 
-    // Идеальный метод через .open(), открывающий PDF в мобильном просмотрщике без кракозябр
+    // Супернадежная генерация PDF через Blob URL, обходящая любые блокировки WebView
     async function generateHybridPDF() {
       renderPhotos();
       
@@ -1285,7 +1285,19 @@
         content: contentStack
       };
 
-      pdfMake.createPdf(docDefinition).open();
+      const blankUid = currentGroup.uid;
+      const fileName = `Blank_${blankUid}.pdf`;
+
+      pdfMake.createPdf(docDefinition).getBlob((blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      });
     }
   </script>
 </body>
