@@ -214,15 +214,6 @@
       justify-content: space-between;
     }
 
-    .photo-buttons-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .photo-buttons-group button {
-      flex: 1;
-    }
-
     .photo-thumbnails {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -591,7 +582,7 @@
     function createDefaultWindowItem() {
       return {
         shape: 4,
-        sides: [100, 150, 100, 150], // По умолчанию в сантиметрах (например 100 см и 150 см)
+        sides: [100, 150, 100, 150],
         cants: [5, 5, 5, 5]
       };
     }
@@ -912,7 +903,6 @@
           height = maxSide * 1.2;
         }
 
-        // Перевод сантиметров в метры для расчета площади: (см / 100) * (см / 100)
         let winAreaM2 = (width / 100) * (height / 100);
         if (winAreaM2 < 2.0) { winAreaM2 = 2.0; }
         totalArea += winAreaM2;
@@ -1340,9 +1330,10 @@
     }
 
     function getPdfOptions() {
+      const blankUid = groupsData[currentGroupIndex].uid;
       return {
         margin: 0,
-        filename: `Бланк_Замера_ТЕНТОКНО_№${groupsData[currentGroupIndex].uid}.pdf`,
+        filename: `Бланк_${blankUid}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowWidth: 800 },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
@@ -1356,9 +1347,7 @@
       const opt = getPdfOptions();
       
       html2pdf().set(opt).from(element).save().catch(err => {
-        html2pdf().set(opt).from(element).outputPdf('bloburl').then(pdfUrl => {
-          window.open(pdfUrl, '_blank');
-        });
+        console.error("Ошибка сохранения PDF:", err);
       });
     }
 
@@ -1371,19 +1360,17 @@
         const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
         const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: `Бланк замера №${groupsData[currentGroupIndex].uid}`,
+            title: `Бланк заказа №${groupsData[currentGroupIndex].uid}`,
             text: 'Отправляю бланк замера мягких окон TENTOKNO'
           });
         } else {
-          html2pdf().set(opt).from(element).outputPdf('bloburl').then(pdfUrl => {
-            window.open(pdfUrl, '_blank');
-          });
+          html2pdf().set(opt).from(element).save();
         }
       } catch (err) {
-        console.error(err);
+        console.error("Ошибка при отправке PDF:", err);
         exportToPDF();
       }
     }
