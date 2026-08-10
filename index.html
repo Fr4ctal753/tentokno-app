@@ -555,7 +555,7 @@
       <div class="actions">
         <button class="btn-secondary btn-toggle-preview" id="preview-btn" onclick="shakeAndTogglePreview(this)">👁️ Предпросмотр бланка</button>
         <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Отправить PDF (WhatsApp/TG)</button>
-        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Скачать PDF</button>
+        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Скачать / Открыть PDF</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -1339,24 +1339,27 @@
       };
     }
 
-    // ИСПРАВЛЕНО: Прямое скачивание без диалоговых окон
+    // ИСПРАВЛЕНО (Вариант 1): Генерация PDF и открытие в новой вкладке (работает везде)
     function exportToPDF() {
       renderPhotos();
       const element = document.getElementById('pdf-document-wrapper');
       const opt = getPdfOptions();
       
       html2pdf().set(opt).from(element).output('blob').then((pdfBlob) => {
-        const blob = new Blob([pdfBlob], { type: 'application/pdf' });
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.download = opt.filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+        const newWindow = window.open(pdfUrl, '_blank');
+        if (!newWindow) {
+          const link = document.createElement('a');
+          link.href = pdfUrl;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
       });
     }
 
-    // ИСПРАВЛЕНО: Мгновенный вызов нативного меню отправки (WhatsApp, Telegram и т.д.)
+    // Отправка через нативное меню шаринга (WhatsApp, Telegram и т.д.)
     async function sharePDF() {
       renderPhotos();
       const element = document.getElementById('pdf-document-wrapper');
@@ -1373,7 +1376,6 @@
             text: 'Бланк замера мягких окон TENTOKNO'
           });
         } else {
-          // Запасной вариант для ПК или старых браузеров: открытие PDF в новой вкладке
           const pdfUrl = URL.createObjectURL(pdfBlob);
           window.open(pdfUrl, '_blank');
         }
