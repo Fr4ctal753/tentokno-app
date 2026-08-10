@@ -8,10 +8,8 @@
   
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
 
-  <!-- Библиотеки pdfmake и html2canvas -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- Библиотека для создания ZIP-архивов прямо в браузере -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <style>
     :root {
@@ -216,27 +214,17 @@
       justify-content: space-between;
     }
 
-    .photo-buttons-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .btn-photo-action {
+    .btn-photo-unified {
       background: #27ae60;
       color: #fff;
       border: none;
-      padding: 12px 6px;
+      padding: 12px;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       text-transform: uppercase;
-      text-align: center;
-    }
-
-    .btn-photo-action.gallery {
-      background: #2980b9;
+      width: 100%;
     }
 
     .photo-thumbnails {
@@ -364,33 +352,6 @@
       height: auto;
       max-width: 100%;
     }
-
-    .pdf-photo-page {
-      width: 100%;
-      background: #fff;
-      box-sizing: border-box;
-      padding: 20px;
-      margin-top: 15px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .pdf-photo-page h3 {
-      font-family: Arial, sans-serif;
-      color: #333;
-      margin-bottom: 10px;
-      font-size: 14px;
-      border-bottom: 2px solid #ffcc00;
-      padding-bottom: 4px;
-      width: 100%;
-    }
-
-    .pdf-photo-page img {
-      max-width: 100%;
-      height: auto;
-      object-fit: contain;
-      border: 1px solid #ccc;
-    }
   </style>
 </head>
 <body>
@@ -498,21 +459,16 @@
 
       <div class="section-title">Фотографии объекта (макс. 10)</div>
       
-      <div class="photo-buttons-grid">
-        <button class="btn-photo-action" onclick="document.getElementById('photo-camera-input').click()">📸 Сделать фото</button>
-        <button class="btn-photo-action gallery" onclick="document.getElementById('photo-gallery-input').click()">🖼️ Из галереи</button>
-      </div>
-
-      <input type="file" id="photo-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this)">
-      <input type="file" id="photo-gallery-input" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)">
+      <button class="btn-photo-unified" onclick="document.getElementById('photo-unified-input').click()">📷 ДОБАВИТЬ ФОТО</button>
+      <input type="file" id="photo-unified-input" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)">
       
       <button class="btn-delete-all-photos" onclick="deleteAllPhotos(this)">🗑️ Удалить все фото</button>
       
       <div class="photo-thumbnails" id="photo-thumbs-container"></div>
 
       <div class="actions">
-        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Переслать PDF</button>
-        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Скачать PDF</button>
+        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndDownloadZip(this)">📦 Скачать ZIP (Бланк + Фото)</button>
+        <button class="btn-secondary" onclick="shakeAndDownloadImage(this)">🖼️ Скачать только Бланк (JPG)</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -523,7 +479,6 @@
         <div id="pdf-container">
           <canvas id="blankCanvas" width="800" height="1130"></canvas>
         </div>
-        <div id="pdf-photos-list-container"></div>
       </div>
     </div>
   </div>
@@ -531,8 +486,8 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_hybrid_pdf_db_v34';
-    const LAST_INDEX_KEY = 'tentokno_hybrid_pdf_idx_v34';
+    const DB_KEY = 'tentokno_zip_db_v1';
+    const LAST_INDEX_KEY = 'tentokno_zip_idx_v1';
 
     function createDefaultWindowItem() {
       return {
@@ -605,23 +560,48 @@
       setTimeout(() => btn.classList.remove('shaking'), 300);
     }
 
-    function shakeAndExportPDF(btn) {
+    function shakeAndDownloadImage(btn) {
       btn.classList.add('shaking');
-      renderPhotos();
       draw();
       setTimeout(() => {
         btn.classList.remove('shaking');
-        generateDownloadPDF();
+        const link = document.createElement('a');
+        link.download = `Blank_${groupsData[currentGroupIndex].uid}.jpg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.95);
+        link.click();
       }, 300);
     }
 
-    function shakeAndSharePDF(btn) {
+    // Быстрая упаковка в ZIP архиватор прямо в браузере
+    async function shakeAndDownloadZip(btn) {
       btn.classList.add('shaking');
-      renderPhotos();
       draw();
-      setTimeout(() => {
+      setTimeout(async () => {
         btn.classList.remove('shaking');
-        generateSharePDF();
+        
+        const zip = new JSZip();
+        const currentGroup = groupsData[currentGroupIndex];
+        
+        // Добавляем бланк замера
+        const blankDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const blankBase64 = blankDataUrl.split(',')[1];
+        zip.file(`Blank_${currentGroup.uid}.jpg`, blankBase64, {base64: true});
+
+        // Добавляем фотографии, если они есть
+        if (currentGroup.photos && currentGroup.photos.length > 0) {
+          const folder = zip.folder(`Photos_Blank_${currentGroup.uid}`);
+          currentGroup.photos.forEach((photoBase64, idx) => {
+            const cleanBase64 = photoBase64.split(',')[1];
+            folder.file(`photo_${idx + 1}.jpg`, cleanBase64, {base64: true});
+          });
+        }
+
+        // Генерируем архив и отдаем на скачивание
+        const content = await zip.generateAsync({type: "blob"});
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = `Zamer_Blank_${currentGroup.uid}.zip`;
+        link.click();
       }, 300);
     }
 
@@ -640,7 +620,7 @@
         reader.onload = function(e) {
           const img = new Image();
           img.onload = function() {
-            const maxDim = 800;
+            const maxDim = 1000;
             let w = img.width;
             let h = img.height;
             
@@ -655,7 +635,7 @@
             const compCtx = compCanvas.getContext('2d');
             compCtx.drawImage(img, 0, 0, w, h);
             
-            const compressedBase64 = compCanvas.toDataURL('image/jpeg', 0.6);
+            const compressedBase64 = compCanvas.toDataURL('image/jpeg', 0.7);
             
             if (currentGroup.photos.length < 10) {
               currentGroup.photos.push(compressedBase64);
@@ -693,20 +673,6 @@
           <button class="thumb-del" onclick="deletePhoto(${idx})">×</button>
         `;
         thumbContainer.appendChild(wrap);
-      });
-
-      const pdfPhotosContainer = document.getElementById('pdf-photos-list-container');
-      pdfPhotosContainer.innerHTML = '';
-      currentGroup.photos.forEach((base64, idx) => {
-        const photoPage = document.createElement('div');
-        photoPage.className = 'pdf-photo-page'; 
-        photoPage.innerHTML = `
-          <h3>Приложение к Бланку №${currentGroup.uid} — Фото объекта №${idx + 1}</h3>
-          <div class="photo-container-render">
-            <img src="${base64}">
-          </div>
-        `;
-        pdfPhotosContainer.appendChild(photoPage);
       });
     }
 
@@ -1264,103 +1230,6 @@
 
       ctx.font = 'bold 13px Arial';
       ctx.fillText('Подпись заказчика _________________________', 25, 1075);
-    }
-
-    // Кнопка скачивания через .download()
-    async function generateDownloadPDF() {
-      renderPhotos();
-      
-      const blankDataUrl = canvas.toDataURL('image/jpeg', 0.95);
-      
-      const contentStack = [
-        { image: blankDataUrl, width: 515, alignment: 'center' }
-      ];
-
-      const currentGroup = groupsData[currentGroupIndex];
-      if (currentGroup.photos && currentGroup.photos.length > 0) {
-        currentGroup.photos.forEach((photoBase64, idx) => {
-          contentStack.push({ text: '', pageBreak: 'before' });
-          contentStack.push({
-            text: `Приложение к Бланку №${currentGroup.uid} — Фото объекта №${idx + 1}`,
-            fontSize: 14,
-            bold: true,
-            margin: [0, 0, 0, 15]
-          });
-          contentStack.push({
-            image: photoBase64,
-            fit: [515, 700],
-            alignment: 'center'
-          });
-        });
-      }
-
-      const docDefinition = {
-        pageSize: 'A4',
-        pageMargins: [40, 40, 40, 40],
-        content: contentStack
-      };
-
-      const blankUid = currentGroup.uid;
-      const fileName = `Blank_${blankUid}.pdf`;
-
-      pdfMake.createPdf(docDefinition).download(fileName);
-    }
-
-    // Кнопка пересылки/поделиться (через Web Share API или нативный .open если не поддерживается)
-    async function generateSharePDF() {
-      renderPhotos();
-      
-      const blankDataUrl = canvas.toDataURL('image/jpeg', 0.95);
-      
-      const contentStack = [
-        { image: blankDataUrl, width: 515, alignment: 'center' }
-      ];
-
-      const currentGroup = groupsData[currentGroupIndex];
-      if (currentGroup.photos && currentGroup.photos.length > 0) {
-        currentGroup.photos.forEach((photoBase64, idx) => {
-          contentStack.push({ text: '', pageBreak: 'before' });
-          contentStack.push({
-            text: `Приложение к Бланку №${currentGroup.uid} — Фото объекта №${idx + 1}`,
-            fontSize: 14,
-            bold: true,
-            margin: [0, 0, 0, 15]
-          });
-          contentStack.push({
-            image: photoBase64,
-            fit: [515, 700],
-            alignment: 'center'
-          });
-        });
-      }
-
-      const docDefinition = {
-        pageSize: 'A4',
-        pageMargins: [40, 40, 40, 40],
-        content: contentStack
-      };
-
-      const pdfDocGenerator = pdfMake.createPdf(docDefinition);
-
-      pdfDocGenerator.getBlob(async (blob) => {
-        const file = new File([blob], `Blank_${currentGroup.uid}.pdf`, { type: 'application/pdf' });
-        
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: `Бланк замера №${currentGroup.uid}`,
-              text: 'Мягкие окна - Бланк заказа'
-            });
-            return;
-          } catch (err) {
-            if (err.name !== 'AbortError') console.error("Ошибка при отправке:", err);
-          }
-        }
-        
-        // Фолбэк: если शेयर недоступен, открываем в новой вкладке
-        pdfDocGenerator.open();
-      });
     }
   </script>
 </body>
