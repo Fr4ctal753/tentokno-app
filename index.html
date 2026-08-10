@@ -515,8 +515,8 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_hybrid_pdf_db_v29';
-    const LAST_INDEX_KEY = 'tentokno_hybrid_pdf_idx_v29';
+    const DB_KEY = 'tentokno_hybrid_pdf_db_v30';
+    const LAST_INDEX_KEY = 'tentokno_hybrid_pdf_idx_v30';
 
     function createDefaultWindowItem() {
       return {
@@ -595,7 +595,7 @@
       draw();
       setTimeout(() => {
         btn.classList.remove('shaking');
-        generateHybridPDF('download');
+        generateHybridPDF('share'); // В мобильном приложении безопаснее перенаправлять оба действия на вызов Share Sheet
       }, 300);
     }
 
@@ -1250,7 +1250,7 @@
       ctx.fillText('Подпись заказчика _________________________', 25, 1075);
     }
 
-    // Улучшенная функция генерации и сохранения/отправки PDF без диалога "Save As"
+    // Внедренный Вариант 1: Использование Share API для стабильной работы в WebView
     async function generateHybridPDF(actionType) {
       renderPhotos();
       
@@ -1288,36 +1288,30 @@
       const fileName = `Blank_${blankUid}.pdf`;
 
       pdfMake.createPdf(docDefinition).getBlob(async (pdfBlob) => {
-        if (actionType === 'download') {
-          // Использование надежного механизма сохранения с принудительным указанием имени файла для мобильных браузеров
-          const url = URL.createObjectURL(pdfBlob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = fileName;
-          link.style.display = 'none';
-          document.body.appendChild(link);
-          link.click();
-          setTimeout(() => {
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-          }, 1000);
-        } else if (actionType === 'share') {
-          const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-              await navigator.share({
-                files: [file],
-                title: `Бланк заказа №${blankUid}`,
-                text: 'Бланк замера мягких окон TENTOKNO'
-              });
-            } catch (err) {
-              if (err.name !== 'AbortError') {
-                pdfMake.createPdf(docDefinition).download(fileName);
-              }
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: `Бланк заказа №${blankUid}`,
+              text: 'Бланк замера мягких окон TENTOKNO'
+            });
+          } catch (err) {
+            if (err.name !== 'AbortError') {
+              console.error("Ошибка шаринга:", err);
             }
-          } else {
-            pdfMake.createPdf(docDefinition).download(fileName);
           }
+        } else {
+          // Запасной вариант для сред, где Share API недоступен
+          pdfMake.createPdf(docDefinition).getDataUrl((dataUrl) => {
+            const win = window.open();
+            if (win) {
+              win.document.write('<iframe src="' + dataUrl + '" frameborder="0" style="width:100%; height:100%;"></iframe>');
+            } else {
+              pdfMake.createPdf(docDefinition).download(fileName);
+            }
+          });
         }
       });
     }
