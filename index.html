@@ -6,8 +6,7 @@
   <title>Конструктор Мягких Окон — ТЕНТОКНО</title>
   <link rel="manifest" href="manifest.json">
   
-  <!-- Иконка сайта (фавиконка) из вашего логотипа -->
-  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -546,7 +545,6 @@
 
       <div class="section-title">Фотографии объекта (макс. 10)</div>
       
-      <!-- Объединенная кнопка добавления фото -->
       <button class="btn-photo-unified" onclick="document.getElementById('photo-unified-input').click()">📷 ДОБАВИТЬ ФОТО</button>
       <input type="file" id="photo-unified-input" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)">
       
@@ -1341,16 +1339,27 @@
       };
     }
 
+    // Скачивание PDF без всплывающего окна "Save As"
     function exportToPDF() {
       renderPhotos();
       const element = document.getElementById('pdf-document-wrapper');
       const opt = getPdfOptions();
       
-      html2pdf().set(opt).from(element).save().catch(err => {
-        console.error("Ошибка сохранения PDF:", err);
+      html2pdf().set(opt).from(element).outputPdf('blob').then(pdfBlob => {
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = opt.filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      }).catch(err => {
+        console.error("Ошибка скачивания PDF:", err);
       });
     }
 
+    // Отправка PDF через системное меню (WhatsApp / Telegram) без скачивания
     async function sharePDF() {
       renderPhotos();
       const element = document.getElementById('pdf-document-wrapper');
@@ -1360,18 +1369,19 @@
         const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
         const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
 
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
             title: `Бланк заказа №${groupsData[currentGroupIndex].uid}`,
             text: 'Отправляю бланк замера мягких окон TENTOKNO'
           });
         } else {
-          html2pdf().set(opt).from(element).save();
+          // Если устройство не поддерживает передачу файлов через share, открываем PDF в новой вкладке
+          const pdfUrl = URL.createObjectURL(pdfBlob);
+          window.open(pdfUrl, '_blank');
         }
       } catch (err) {
         console.error("Ошибка при отправке PDF:", err);
-        exportToPDF();
       }
     }
   </script>
