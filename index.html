@@ -309,6 +309,55 @@
       text-transform: uppercase;
     }
 
+    /* Модальное окно для сохранения без рекламыконструкторов */
+    #export-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      z-index: 9999;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+    }
+    #export-modal.active { display: flex; }
+    .modal-content {
+      background: #1e1e1e;
+      border: 2px solid var(--accent-yellow);
+      border-radius: 10px;
+      max-width: 500px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+      gap: 10px;
+      max-height: 90vh;
+    }
+    .modal-img-container {
+      width: 100%;
+      overflow-y: auto;
+      max-height: 60vh;
+      background: #fff;
+      border-radius: 6px;
+    }
+    .modal-img-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .modal-close {
+      background: var(--accent-yellow);
+      color: #000;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+    }
+
     .workspace {
       display: flex;
       background: #0d0d0d;
@@ -369,6 +418,17 @@
   </style>
 </head>
 <body>
+
+  <!-- Модальное окно без сторонней рекламы -->
+  <div id="export-modal">
+    <div class="modal-content">
+      <div style="font-size: 0.9rem; color: var(--accent-yellow); font-weight: bold; text-align: center;">Бланк готов! Зажмите картинку и выберите «Скачать изображение»</div>
+      <div class="modal-img-container">
+        <img id="modal-result-img" alt="Бланк">
+      </div>
+      <button class="modal-close" onclick="closeModal()">Закрыть</button>
+    </div>
+  </div>
 
   <header>
     <h1>ТЕНТОКНО — Мобильный замер</h1>
@@ -481,7 +541,7 @@
       <div class="photo-thumbnails" id="photo-thumbs-container"></div>
 
       <div class="actions">
-        <button class="btn-primary" onclick="shakeAndOpenImage(this)">👁️ Посмотреть / Сохранить бланк</button>
+        <button class="btn-primary" onclick="shakeAndShowModal(this)">📥 Скачать / Сохранить бланк</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -500,8 +560,8 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_webview_img_db_v2';
-    const LAST_INDEX_KEY = 'tentokno_webview_img_idx_v2';
+    const DB_KEY = 'tentokno_webview_img_v3';
+    const LAST_INDEX_KEY = 'tentokno_webview_idx_v3';
 
     function createDefaultWindowItem() {
       return {
@@ -574,29 +634,21 @@
       setTimeout(() => btn.classList.remove('shaking'), 300);
     }
 
-    // Безопасное открытие готового бланка во вкладке для сохранения без крашей приложения
-    function shakeAndOpenImage(btn) {
+    // Показываем чистое модальное окно без левых редиректов и рекламы конструкторов
+    function shakeAndShowModal(btn) {
       btn.classList.add('shaking');
       renderPhotos();
       draw();
       setTimeout(() => {
         btn.classList.remove('shaking');
-        
         const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-        const win = window.open('', '_blank');
-        if (win) {
-          win.document.write(`
-            <html>
-              <head><title>Бланк замера</title></head>
-              <body style="margin:0; background:#000; display:flex; justify-content:center; align-items:center; height:100vh;">
-                <img src="${dataUrl}" style="max-width:100%; height:auto;" alt="Бланк">
-              </body>
-            </html>
-          `);
-        } else {
-          window.location.href = dataUrl;
-        }
+        document.getElementById('modal-result-img').src = dataUrl;
+        document.getElementById('export-modal').classList.add('active');
       }, 300);
+    }
+
+    function closeModal() {
+      document.getElementById('export-modal').classList.remove('active');
     }
 
     function handlePhotoUpload(input) {
