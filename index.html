@@ -8,6 +8,7 @@
   
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
 
+  <!-- Библиотеки pdfmake и html2canvas -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -495,8 +496,8 @@
       <div class="photo-thumbnails" id="photo-thumbs-container"></div>
 
       <div class="actions">
-        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Скачать PDF-файл</button>
-        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Скачать PDF-файл</button>
+        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Сформировать PDF</button>
+        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Сформировать PDF</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -1250,7 +1251,7 @@
       ctx.fillText('Подпись заказчика _________________________', 25, 1075);
     }
 
-    // Суперстабильная генерация PDF через getDataUrl (обход белого экрана в WebView)
+    // Идеальный метод через .open(), открывающий PDF в мобильном просмотрщике без кракозябр
     async function generateHybridPDF() {
       renderPhotos();
       
@@ -1284,22 +1285,7 @@
         content: contentStack
       };
 
-      const blankUid = currentGroup.uid;
-      const fileName = `Blank_${blankUid}.pdf`;
-
-      pdfMake.createPdf(docDefinition).getDataUrl((dataUrl) => {
-        try {
-          const link = document.createElement('a');
-          link.href = dataUrl;
-          link.download = fileName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } catch (e) {
-          console.error("Ошибка при скачивании PDF:", e);
-          window.location.href = dataUrl;
-        }
-      });
+      pdfMake.createPdf(docDefinition).open();
     }
   </script>
 </body>
