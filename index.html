@@ -406,6 +406,25 @@
       border: 1px solid #ccc;
     }
 
+    /* Настройка стилей специально для печати / сохранения в PDF */
+    @media print {
+      body {
+        background-color: #fff !important;
+        color: #000 !important;
+      }
+      header, .sidebar {
+        display: none !important;
+      }
+      .workspace {
+        display: block !important;
+        padding: 0 !important;
+        background: #fff !important;
+      }
+      #pdf-document-wrapper {
+        max-width: 100% !important;
+      }
+    }
+
     @media (min-width: 900px) {
       body {
         height: 100vh;
@@ -554,8 +573,8 @@
 
       <div class="actions">
         <button class="btn-secondary btn-toggle-preview" id="preview-btn" onclick="shakeAndTogglePreview(this)">👁️ Предпросмотр бланка</button>
-        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Отправить PDF (WhatsApp/TG)</button>
-        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Скачать / Открыть PDF</button>
+        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Отправить / Сохранить PDF</button>
+        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">🖨️ Печать / Сохранить PDF</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -1327,62 +1346,20 @@
       ctx.fillText('Подпись заказчика _________________________', 25, 1075);
     }
 
-    function getPdfOptions() {
-      const blankUid = groupsData[currentGroupIndex].uid;
-      return {
-        margin: 0,
-        filename: `Бланк_${blankUid}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowWidth: 800 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
-      };
-    }
-
-    // ИСПРАВЛЕНО (Вариант 1): Генерация PDF и открытие в новой вкладке (работает везде)
+    // ИСПРАВЛЕНО (Вариант А): Нативная печать телефона через window.print()
     function exportToPDF() {
       renderPhotos();
-      const element = document.getElementById('pdf-document-wrapper');
-      const opt = getPdfOptions();
+      const ws = document.getElementById('workspace-area');
+      ws.classList.add('visible');
       
-      html2pdf().set(opt).from(element).output('blob').then((pdfBlob) => {
-        const pdfUrl = URL.createObjectURL(pdfBlob);
-        const newWindow = window.open(pdfUrl, '_blank');
-        if (!newWindow) {
-          const link = document.createElement('a');
-          link.href = pdfUrl;
-          link.target = '_blank';
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
-      });
+      setTimeout(() => {
+        window.print();
+      }, 300);
     }
 
-    // Отправка через нативное меню шаринга (WhatsApp, Telegram и т.д.)
+    // Резервный вызов шаринга/печати
     async function sharePDF() {
-      renderPhotos();
-      const element = document.getElementById('pdf-document-wrapper');
-      const opt = getPdfOptions();
-
-      try {
-        const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
-        const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: `Бланк заказа №${groupsData[currentGroupIndex].uid}`,
-            text: 'Бланк замера мягких окон TENTOKNO'
-          });
-        } else {
-          const pdfUrl = URL.createObjectURL(pdfBlob);
-          window.open(pdfUrl, '_blank');
-        }
-      } catch (err) {
-        console.error("Ошибка при отправке:", err);
-        exportToPDF();
-      }
+      exportToPDF();
     }
   </script>
 </body>
