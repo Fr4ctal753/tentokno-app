@@ -496,7 +496,7 @@
       <div class="photo-thumbnails" id="photo-thumbs-container"></div>
 
       <div class="actions">
-        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndOpenPDF(this)">📲 Открыть / Сформировать PDF</button>
+        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndOpenChrome(this)">🌐 Открыть в Хроме и скачать</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -515,8 +515,8 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_webview_pdf_db_v1';
-    const LAST_INDEX_KEY = 'tentokno_webview_pdf_idx_v1';
+    const DB_KEY = 'tentokno_chrome_intent_db_v1';
+    const LAST_INDEX_KEY = 'tentokno_chrome_intent_idx_v1';
 
     function createDefaultWindowItem() {
       return {
@@ -589,8 +589,8 @@
       setTimeout(() => btn.classList.remove('shaking'), 300);
     }
 
-    // Железобетонный метод для WebView: открываем PDF через Data URI в новом контексте/окне
-    function shakeAndOpenPDF(btn) {
+    // Жесткий принудительный выброс в системный Хром через Android Intent / внешний URL
+    function shakeAndOpenChrome(btn) {
       btn.classList.add('shaking');
       renderPhotos();
       draw();
@@ -627,15 +627,25 @@
           content: contentStack
         };
 
-        // Генерация и принудительный вывод в Data URL для WebView
         pdfMake.createPdf(docDefinition).getDataUrl((dataUrl) => {
-          const win = window.open();
-          if (win) {
-            win.document.write(`<iframe src="${dataUrl}" frameborder="0" style="border:0; top:0; left:0; bottom:0; right:0; width:100%; height:100%;" allowfullscreen></iframe>`);
-          } else {
-            // Если блокируется всплывающее окно, пробуем прямой переход
-            window.location.href = dataUrl;
-          }
+          // Создаем виртуальную ссылку на скачивание PDF из сгенерированного бланка
+          const a = document.createElement('a');
+          a.href = dataUrl;
+          a.download = `Blank_${currentGroup.uid}.pdf`;
+          
+          // Формируем Android Intent, который заставляет систему открыть ссылку именно в Google Chrome
+          const rawUrl = window.location.href.split('#')[0];
+          const intentUrl = `intent://${rawUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end;`;
+          
+          // Пробуем сперва скачать напрямую, а параллельно кидаем в Хром
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+
+          // Если внутри WebView скачивание не пошло, сработает перевод на Хром
+          setTimeout(() => {
+            window.location.href = intentUrl;
+          }, 300);
         });
 
       }, 300);
