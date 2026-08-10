@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Конструктор Мягких Окон — ТЕНТОКНО</title>
   
-  <!-- Иконка сайта (фавиконка) из вашего логотипа -->
-  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
 
   <style>
     :root {
@@ -213,13 +210,17 @@
       justify-content: space-between;
     }
 
-    .photo-buttons-group {
-      display: flex;
-      gap: 8px;
-    }
-
-    .photo-buttons-group button {
-      flex: 1;
+    .btn-photo-unified {
+      background: #27ae60;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      width: 100%;
     }
 
     .photo-thumbnails {
@@ -281,52 +282,18 @@
       font-size: 0.9rem;
     }
 
-    .btn-secondary {
-      background: #333;
-      color: #fff;
-      border: 1px solid var(--border-color);
-      padding: 12px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .btn-photo {
-      background: #4a90e2;
-      color: #fff;
-      border: none;
-      padding: 10px 8px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-    }
-
-    .btn-camera {
-      background: #27ae60;
-      color: #fff;
-      border: none;
-      padding: 10px 8px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-    }
-
     .btn-delete-all-photos {
-      background: #d9534f;
-      color: #fff;
-      border: none;
-      padding: 8px;
+      background: #2a2a2a;
+      color: #ff5252;
+      border: 1px solid #444;
+      padding: 10px;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
       font-size: 0.8rem;
       text-transform: uppercase;
       margin-top: 5px;
+      width: 100%;
     }
 
     .btn-danger {
@@ -341,18 +308,78 @@
       text-transform: uppercase;
     }
 
-    .workspace {
+    /* Модальное окно просмотра и сохранения бланка */
+    #export-modal {
       display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 9999;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+    }
+    #export-modal.active { display: flex; }
+    .modal-content {
+      background: #1e1e1e;
+      border: 2px solid var(--accent-yellow);
+      border-radius: 10px;
+      max-width: 500px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 10px;
+      max-height: 92vh;
+    }
+    .modal-img-container {
+      width: 100%;
+      overflow-y: auto;
+      max-height: 65vh;
+      background: #fff;
+      border-radius: 6px;
+    }
+    .modal-img-container img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .modal-btn-download {
+      background: var(--accent-yellow);
+      color: #000;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      text-align: center;
+      text-decoration: none;
+      display: block;
+      width: 100%;
+    }
+    .modal-close {
+      background: #2a2a2a;
+      color: #fff;
+      border: 1px solid #444;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+    }
+
+    .workspace {
+      display: flex;
       background: #0d0d0d;
       justify-content: center;
       align-items: flex-start;
       padding: 15px 5px;
       overflow-x: auto;
       width: 100%;
-    }
-
-    .workspace.visible {
-      display: flex;
     }
 
     #pdf-document-wrapper {
@@ -367,8 +394,6 @@
       background-color: #fff;
       position: relative;
       box-sizing: border-box;
-      page-break-inside: avoid;
-      break-inside: avoid;
     }
 
     canvas {
@@ -378,92 +403,50 @@
       max-width: 100%;
     }
 
-    .pdf-page-block {
-      page-break-inside: avoid;
-      break-inside: avoid;
-      page-break-after: always;
-      break-after: page;
-    }
-
     .pdf-photo-page {
       width: 100%;
-      height: 1120px;
       background: #fff;
       box-sizing: border-box;
-      padding: 40px;
+      padding: 20px;
+      margin-top: 15px;
       display: flex;
       flex-direction: column;
-      page-break-before: always;
-      break-before: page;
-      page-break-inside: avoid;
-      break-inside: avoid;
     }
 
     .pdf-photo-page h3 {
       font-family: Arial, sans-serif;
       color: #333;
-      margin-bottom: 20px;
-      font-size: 16px;
+      margin-bottom: 10px;
+      font-size: 14px;
       border-bottom: 2px solid #ffcc00;
-      padding-bottom: 6px;
+      padding-bottom: 4px;
       width: 100%;
-    }
-
-    .pdf-photo-page .photo-container-render {
-      width: 100%;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      background: #fff;
     }
 
     .pdf-photo-page img {
       max-width: 100%;
-      max-height: 900px;
+      height: auto;
       object-fit: contain;
       border: 1px solid #ccc;
-    }
-
-    @media (min-width: 900px) {
-      body {
-        height: 100vh;
-        overflow: hidden;
-      }
-      .app-container {
-        flex-direction: row;
-        overflow: hidden;
-      }
-      .sidebar {
-        width: 380px;
-        height: 100%;
-        overflow-y: auto;
-        border-right: 1px solid var(--border-color);
-      }
-      .workspace {
-        display: flex !important;
-        flex: 1;
-        height: 100%;
-        overflow: auto;
-        padding: 15px;
-      }
-      #pdf-container {
-        width: 800px;
-      }
-      .pdf-photo-page {
-        width: 800px;
-      }
-      .btn-toggle-preview {
-        display: none;
-      }
     }
   </style>
 </head>
 <body>
 
+  <!-- Модальное окно для надежного скачивания бланка и фотографий -->
+  <div id="export-modal">
+    <div class="modal-content">
+      <div style="font-size: 0.85rem; color: var(--accent-yellow); font-weight: bold; text-align: center;">Бланк готов! Нажмите кнопку ниже для сохранения:</div>
+      <div class="modal-img-container">
+        <img id="modal-result-img" alt="Бланк">
+      </div>
+      <a id="download-file-link" class="modal-btn-download" download="blank.jpg">💾 СКАЧАТЬ ФАЙЛ НА ТЕЛЕФОН</a>
+      <button class="modal-close" onclick="closeModal()">Закрыть</button>
+    </div>
+  </div>
+
   <header>
-    <h1>ТЕНТОКНО — Замер</h1>
+    <h1>ТЕНТОКНО — Мобильный замер</h1>
     <span id="window-counter-info" style="color: var(--text-muted); font-size: 0.85rem;">Бланк №1</span>
   </header>
 
@@ -560,27 +543,20 @@
         <button class="btn-shape" id="btn-shape-5" onclick="setShape(5)">5 Углов</button>
       </div>
 
-      <div class="section-title">Размеры проема и канта (мм)</div>
+      <div class="section-title">Размеры проема и канта (см)</div>
       <div class="inputs-grid" id="inputs-container"></div>
 
       <div class="section-title">Фотографии объекта (макс. 10)</div>
       
-      <div class="photo-buttons-group">
-        <button class="btn-photo" onclick="document.getElementById('photo-gallery-input').click()">🖼️ ИЗ ГАЛЕРЕИ</button>
-        <button class="btn-camera" onclick="document.getElementById('photo-camera-input').click()">📷 СДЕЛАТЬ ФОТО</button>
-      </div>
-
-      <input type="file" id="photo-gallery-input" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)">
-      <input type="file" id="photo-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this)">
+      <button class="btn-photo-unified" onclick="document.getElementById('photo-unified-input').click()">📷 ДОБАВИТЬ ФОТО</button>
+      <input type="file" id="photo-unified-input" accept="image/*" multiple style="display: none;" onchange="handlePhotoUpload(this)">
       
       <button class="btn-delete-all-photos" onclick="deleteAllPhotos(this)">🗑️ Удалить все фото</button>
       
       <div class="photo-thumbnails" id="photo-thumbs-container"></div>
 
       <div class="actions">
-        <button class="btn-secondary btn-toggle-preview" id="preview-btn" onclick="shakeAndTogglePreview(this)">👁️ Предпросмотр бланка</button>
-        <button class="btn-primary" style="background: #25d366; color: #000;" onclick="shakeAndSharePDF(this)">📲 Отправить PDF (WhatsApp/TG)</button>
-        <button class="btn-secondary" onclick="shakeAndExportPDF(this)">💾 Скачать PDF</button>
+        <button class="btn-primary" onclick="shakeAndShowModal(this)">📥 СКАЧАТЬ БЛАНК (ФОТО)</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -588,7 +564,7 @@
 
     <div class="workspace" id="workspace-area">
       <div id="pdf-document-wrapper">
-        <div id="pdf-container" class="pdf-page-block">
+        <div id="pdf-container">
           <canvas id="blankCanvas" width="800" height="1130"></canvas>
         </div>
         <div id="pdf-photos-list-container"></div>
@@ -599,14 +575,14 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_ultimate_gallery_db_v24';
-    const LAST_INDEX_KEY = 'tentokno_ultimate_gallery_idx_v24';
+    const DB_KEY = 'tentokno_webview_img_v6';
+    const LAST_INDEX_KEY = 'tentokno_webview_idx_v6';
 
     function createDefaultWindowItem() {
       return {
         shape: 4,
-        sides: [1000, 1500, 1000, 1500],
-        cants: [50, 50, 50, 50]
+        sides: [100, 150, 100, 150],
+        cants: [5, 5, 5, 5]
       };
     }
 
@@ -673,42 +649,29 @@
       setTimeout(() => btn.classList.remove('shaking'), 300);
     }
 
-    function shakeAndTogglePreview(btn) {
+    function shakeAndShowModal(btn) {
       btn.classList.add('shaking');
       renderPhotos();
       draw();
       setTimeout(() => {
         btn.classList.remove('shaking');
-        togglePreview();
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const currentGroup = groupsData[currentGroupIndex];
+        const contractName = currentGroup.headerInfo.contract ? `_${currentGroup.headerInfo.contract}` : '';
+        const fileName = `Blank_${currentGroup.uid}${contractName}.jpg`;
+
+        document.getElementById('modal-result-img').src = dataUrl;
+        
+        const dlLink = document.getElementById('download-file-link');
+        dlLink.href = dataUrl;
+        dlLink.download = fileName;
+
+        document.getElementById('export-modal').classList.add('active');
       }, 300);
     }
 
-    function shakeAndExportPDF(btn) {
-      btn.classList.add('shaking');
-      renderPhotos();
-      draw();
-      setTimeout(() => {
-        btn.classList.remove('shaking');
-        exportToPDF();
-      }, 300);
-    }
-
-    function shakeAndSharePDF(btn) {
-      btn.classList.add('shaking');
-      renderPhotos();
-      draw();
-      setTimeout(() => {
-        btn.classList.remove('shaking');
-        sharePDF();
-      }, 300);
-    }
-
-    function togglePreview() {
-      const ws = document.getElementById('workspace-area');
-      ws.classList.toggle('visible');
-      if (ws.classList.contains('visible')) {
-        ws.scrollIntoView({ behavior: 'smooth' });
-      }
+    function closeModal() {
+      document.getElementById('export-modal').classList.remove('active');
     }
 
     function handlePhotoUpload(input) {
@@ -726,7 +689,7 @@
         reader.onload = function(e) {
           const img = new Image();
           img.onload = function() {
-            const maxDim = 800;
+            const maxDim = 900;
             let w = img.width;
             let h = img.height;
             
@@ -741,7 +704,7 @@
             const compCtx = compCanvas.getContext('2d');
             compCtx.drawImage(img, 0, 0, w, h);
             
-            const compressedBase64 = compCanvas.toDataURL('image/jpeg', 0.6);
+            const compressedBase64 = compCanvas.toDataURL('image/jpeg', 0.65);
             
             if (currentGroup.photos.length < 10) {
               currentGroup.photos.push(compressedBase64);
@@ -926,7 +889,7 @@
           height = maxSide * 1.2;
         }
 
-        let winAreaM2 = (width / 1000) * (height / 1000);
+        let winAreaM2 = (width / 100) * (height / 100);
         if (winAreaM2 < 2.0) { winAreaM2 = 2.0; }
         totalArea += winAreaM2;
       });
@@ -990,8 +953,8 @@
       activeWindow.shape = shapeCount;
 
       while (activeWindow.sides.length < shapeCount) {
-        activeWindow.sides.push(1000);
-        activeWindow.cants.push(50);
+        activeWindow.sides.push(100);
+        activeWindow.cants.push(5);
       }
       activeWindow.sides = activeWindow.sides.slice(0, shapeCount);
       activeWindow.cants = activeWindow.cants.slice(0, shapeCount);
@@ -1017,11 +980,11 @@
         row.innerHTML = `
           <label>${SIDE_NAMES[i]}</label>
           <div class="input-group">
-            <span>Проем (мм)</span>
+            <span>Проем (см)</span>
             <input type="number" value="${activeWindow.sides[i]}" onchange="updateValue('sides', ${i}, this.value)">
           </div>
           <div class="input-group">
-            <span>Кант (мм)</span>
+            <span>Кант (см)</span>
             <input type="number" value="${activeWindow.cants[i]}" onchange="updateValue('cants', ${i}, this.value)">
           </div>
         `;
@@ -1044,7 +1007,7 @@
       for (let i = 0; i < count; i++) {
         let p1 = innerPoints[i];
         let p2 = innerPoints[(i + 1) % count];
-        let cant = cants[i] || 50;
+        let cant = cants[i] || 5;
         let offsetDist = cant * scale;
 
         let dx = p2.x - p1.x;
@@ -1058,6 +1021,7 @@
         let cy = innerPoints.reduce((acc, p) => acc + p.y, 0) / count;
         let mx = (p1.x + p2.x) / 2;
         let my = (p1.y + p2.y) / 2;
+
         if ((mx - cx) * nx + (my - cy) * ny < 0) { nx = -nx; ny = -ny; }
 
         lines.push({
@@ -1087,7 +1051,6 @@
       };
     }
 
-    // Разбиение текста комментариев ровно на строчки без обрезания (максимум 2 строки, ширина увеличена в ~1.5 раза)
     function wrapTextToTwoLines(text, maxLineWidth, font) {
       ctx.font = font;
       if (!text || text.trim() === '') return [];
@@ -1175,7 +1138,6 @@
       
       ctx.fillText(`Цвет окантовки: ${colorTxt}   Ремешки: ${strapsTxt} шт.`, 25, 220);
       
-      // Увеличенная ширина строки комментариев (в полтора раза шире прежнего, аккуратно до границы чертежа)
       let commentLines = wrapTextToTwoLines(h.weights, 670, '13px Arial');
       let actualGridTop = 262;
       let gridHeight = 708;
@@ -1232,7 +1194,7 @@
         let cx = gridLeft + c * cellW + cellW / 2;
         let cy = actualGridTop + r * cellH + cellH / 2 + 15;
 
-        let maxSide = Math.max(...sides, 100);
+        let maxSide = Math.max(...sides, 10);
         
         let scaleMultiplier = qty === 1 ? 0.44 : (qty === 2 ? 0.39 : 0.34);
         let scale = (Math.min(cellW, cellH) * scaleMultiplier) / maxSide;
@@ -1317,7 +1279,7 @@
           let labelX = mx + nx * labelDist;
           let labelY = my + ny * labelDist;
 
-          let text1 = `${sides[i]} мм`;
+          let text1 = `${sides[i]} см`;
           let text2 = `к: ${cants[i]}`;
 
           ctx.textAlign = 'center';
@@ -1347,59 +1309,10 @@
       ctx.textAlign = 'left';
       ctx.fillText('Заказчик согласовал принципиальную схему установки мягких окон, согласно бланку заказа и', 25, 995);
       ctx.fillText('осведомлен о технических особенностях изготовления изделий (максимальная ширина пленки', 25, 1010);
-      ctx.fillText('1,8м, если габариты превышают эту ширину, то производится спайка пленки внахлест)', 25, 1025);
+      ctx.fillText('180см, если габариты превышают эту ширину, то производится спайка пленки внахлест)', 25, 1025);
 
       ctx.font = 'bold 13px Arial';
       ctx.fillText('Подпись заказчика _________________________', 25, 1075);
-    }
-
-    function getPdfOptions() {
-      return {
-        margin: 0,
-        filename: `Бланк_Замера_ТЕНТОКНО_№${groupsData[currentGroupIndex].uid}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowWidth: 800 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
-      };
-    }
-
-    function exportToPDF() {
-      renderPhotos();
-      const element = document.getElementById('pdf-document-wrapper');
-      const opt = getPdfOptions();
-      
-      html2pdf().set(opt).from(element).save().catch(err => {
-        html2pdf().set(opt).from(element).outputPdf('bloburl').then(pdfUrl => {
-          window.open(pdfUrl, '_blank');
-        });
-      });
-    }
-
-    async function sharePDF() {
-      renderPhotos();
-      const element = document.getElementById('pdf-document-wrapper');
-      const opt = getPdfOptions();
-
-      try {
-        const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
-        const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: `Бланк замера №${groupsData[currentGroupIndex].uid}`,
-            text: 'Отправляю бланк замера мягких окон TENTOKNO'
-          });
-        } else {
-          html2pdf().set(opt).from(element).outputPdf('bloburl').then(pdfUrl => {
-            window.open(pdfUrl, '_blank');
-          });
-        }
-      } catch (err) {
-        console.error(err);
-        exportToPDF();
-      }
     }
   </script>
 </body>
