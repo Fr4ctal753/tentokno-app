@@ -7,7 +7,6 @@
   
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
 
-  <!-- Подключаем html2pdf.js для генерации полноценного PDF с текстом, чертежами и фото -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
@@ -311,7 +310,6 @@
       text-transform: uppercase;
     }
 
-    /* Оверлей генерации PDF */
     #loading-overlay {
       display: none;
       position: fixed;
@@ -522,8 +520,8 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_webview_pdf_v4';
-    const LAST_INDEX_KEY = 'tentokno_webview_idx_v4';
+    const DB_KEY = 'tentokno_webview_pdf_v5';
+    const LAST_INDEX_KEY = 'tentokno_webview_idx_v5';
 
     function createDefaultWindowItem() {
       return {
@@ -596,7 +594,7 @@
       setTimeout(() => btn.classList.remove('shaking'), 300);
     }
 
-    // Железобетонная генерация и скачивание PDF со всеми фотографиями через html2pdf
+    // Железобетонный обход диалога Save As через Blob-ссылку без попапов
     function shakeAndDownloadPDF(btn) {
       btn.classList.add('shaking');
       renderPhotos();
@@ -609,16 +607,27 @@
         const element = document.getElementById('pdf-document-wrapper');
         const currentGroup = groupsData[currentGroupIndex];
         const contractName = currentGroup.headerInfo.contract ? `_${currentGroup.headerInfo.contract}` : '';
+        const fileName = `Blank_${currentGroup.uid}${contractName}.pdf`;
 
         const opt = {
           margin:       0,
-          filename:     `Blank_${currentGroup.uid}${contractName}.pdf`,
+          filename:     fileName,
           image:        { type: 'jpeg', quality: 0.95 },
           html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
           jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        html2pdf().from(element).set(opt).save().then(() => {
+        // Генерируем PDF как Blob и скачиваем силой программного клика
+        html2pdf().from(element).set(opt).outputPdf('blob').then((pdfBlob) => {
+          const blobUrl = URL.createObjectURL(pdfBlob);
+          const downloadLink = document.createElement('a');
+          downloadLink.href = blobUrl;
+          downloadLink.download = fileName;
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+          
+          setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
           document.getElementById('loading-overlay').classList.remove('active');
         }).catch(err => {
           console.error(err);
