@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Конструктор Мягких Окон — ТЕНТОКНО</title>
-  <link rel="manifest" href="manifest.json">
   
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
+
+  <!-- Подключаем html2pdf.js для генерации полноценного PDF с текстом, чертежами и фото -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     :root {
@@ -309,8 +311,8 @@
       text-transform: uppercase;
     }
 
-    /* Модальное окно для сохранения без рекламыконструкторов */
-    #export-modal {
+    /* Оверлей генерации PDF */
+    #loading-overlay {
       display: none;
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -319,44 +321,12 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 15px;
-    }
-    #export-modal.active { display: flex; }
-    .modal-content {
-      background: #1e1e1e;
-      border: 2px solid var(--accent-yellow);
-      border-radius: 10px;
-      max-width: 500px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 15px;
-      gap: 10px;
-      max-height: 90vh;
-    }
-    .modal-img-container {
-      width: 100%;
-      overflow-y: auto;
-      max-height: 60vh;
-      background: #fff;
-      border-radius: 6px;
-    }
-    .modal-img-container img {
-      width: 100%;
-      height: auto;
-      display: block;
-    }
-    .modal-close {
-      background: var(--accent-yellow);
-      color: #000;
-      border: none;
-      padding: 10px;
-      border-radius: 6px;
+      color: var(--accent-yellow);
       font-weight: bold;
-      cursor: pointer;
-      text-transform: uppercase;
-      font-size: 0.9rem;
+      font-size: 1.1rem;
+      gap: 15px;
     }
+    #loading-overlay.active { display: flex; }
 
     .workspace {
       display: flex;
@@ -369,10 +339,9 @@
     }
 
     #pdf-document-wrapper {
-      width: 100%;
-      max-width: 800px;
-      margin: 0 auto;
-      background-color: transparent;
+      width: 800px;
+      background-color: #ffffff;
+      box-sizing: border-box;
     }
 
     #pdf-container {
@@ -386,48 +355,41 @@
       display: block;
       width: 100%;
       height: auto;
-      max-width: 100%;
     }
 
     .pdf-photo-page {
       width: 100%;
       background: #fff;
       box-sizing: border-box;
-      padding: 20px;
-      margin-top: 15px;
+      padding: 30px;
       display: flex;
       flex-direction: column;
+      page-break-before: always;
     }
 
     .pdf-photo-page h3 {
       font-family: Arial, sans-serif;
       color: #333;
-      margin-bottom: 10px;
-      font-size: 14px;
+      margin-bottom: 15px;
+      font-size: 16px;
       border-bottom: 2px solid #ffcc00;
-      padding-bottom: 4px;
+      padding-bottom: 6px;
       width: 100%;
     }
 
     .pdf-photo-page img {
       max-width: 100%;
-      height: auto;
+      max-height: 950px;
       object-fit: contain;
       border: 1px solid #ccc;
+      margin: 0 auto;
     }
   </style>
 </head>
 <body>
 
-  <!-- Модальное окно без сторонней рекламы -->
-  <div id="export-modal">
-    <div class="modal-content">
-      <div style="font-size: 0.9rem; color: var(--accent-yellow); font-weight: bold; text-align: center;">Бланк готов! Зажмите картинку и выберите «Скачать изображение»</div>
-      <div class="modal-img-container">
-        <img id="modal-result-img" alt="Бланк">
-      </div>
-      <button class="modal-close" onclick="closeModal()">Закрыть</button>
-    </div>
+  <div id="loading-overlay">
+    <div>⏳ Генерируем PDF вместе с фотографиями...</div>
   </div>
 
   <header>
@@ -541,7 +503,7 @@
       <div class="photo-thumbnails" id="photo-thumbs-container"></div>
 
       <div class="actions">
-        <button class="btn-primary" onclick="shakeAndShowModal(this)">📥 Скачать / Сохранить бланк</button>
+        <button class="btn-primary" onclick="shakeAndDownloadPDF(this)">📥 СКАЧАТЬ PDF С ФОТО</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -560,8 +522,8 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_webview_img_v3';
-    const LAST_INDEX_KEY = 'tentokno_webview_idx_v3';
+    const DB_KEY = 'tentokno_webview_pdf_v4';
+    const LAST_INDEX_KEY = 'tentokno_webview_idx_v4';
 
     function createDefaultWindowItem() {
       return {
@@ -634,21 +596,36 @@
       setTimeout(() => btn.classList.remove('shaking'), 300);
     }
 
-    // Показываем чистое модальное окно без левых редиректов и рекламы конструкторов
-    function shakeAndShowModal(btn) {
+    // Железобетонная генерация и скачивание PDF со всеми фотографиями через html2pdf
+    function shakeAndDownloadPDF(btn) {
       btn.classList.add('shaking');
       renderPhotos();
       draw();
+      
       setTimeout(() => {
         btn.classList.remove('shaking');
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-        document.getElementById('modal-result-img').src = dataUrl;
-        document.getElementById('export-modal').classList.add('active');
-      }, 300);
-    }
+        document.getElementById('loading-overlay').classList.add('active');
 
-    function closeModal() {
-      document.getElementById('export-modal').classList.remove('active');
+        const element = document.getElementById('pdf-document-wrapper');
+        const currentGroup = groupsData[currentGroupIndex];
+        const contractName = currentGroup.headerInfo.contract ? `_${currentGroup.headerInfo.contract}` : '';
+
+        const opt = {
+          margin:       0,
+          filename:     `Blank_${currentGroup.uid}${contractName}.pdf`,
+          image:        { type: 'jpeg', quality: 0.95 },
+          html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().from(element).set(opt).save().then(() => {
+          document.getElementById('loading-overlay').classList.remove('active');
+        }).catch(err => {
+          console.error(err);
+          document.getElementById('loading-overlay').classList.remove('active');
+          alert("Ошибка при создании PDF");
+        });
+      }, 300);
     }
 
     function handlePhotoUpload(input) {
@@ -666,7 +643,7 @@
         reader.onload = function(e) {
           const img = new Image();
           img.onload = function() {
-            const maxDim = 800;
+            const maxDim = 1000;
             let w = img.width;
             let h = img.height;
             
@@ -681,7 +658,7 @@
             const compCtx = compCanvas.getContext('2d');
             compCtx.drawImage(img, 0, 0, w, h);
             
-            const compressedBase64 = compCanvas.toDataURL('image/jpeg', 0.6);
+            const compressedBase64 = compCanvas.toDataURL('image/jpeg', 0.7);
             
             if (currentGroup.photos.length < 10) {
               currentGroup.photos.push(compressedBase64);
@@ -728,7 +705,7 @@
         photoPage.className = 'pdf-photo-page'; 
         photoPage.innerHTML = `
           <h3>Приложение к Бланку №${currentGroup.uid} — Фото объекта №${idx + 1}</h3>
-          <div class="photo-container-render">
+          <div style="display:flex; justify-content:center; align-items:center; flex:1;">
             <img src="${base64}">
           </div>
         `;
