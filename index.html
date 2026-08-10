@@ -8,9 +8,6 @@
   
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAC2SURBVHja7NVRCoAwCATAu9v/v3n5u0lR2EID83o6z6l1JjN/AABg9803N/jH4e8aAAD8k30HAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwG8HABgGAAAAwO/+AV1gAAV5Y5uFAAAAAElFTkSuQmCC">
 
-  <!-- Библиотека html2canvas для точного сохранения бланка картинкой -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
   <style>
     :root {
       --bg-dark: #121212;
@@ -286,6 +283,20 @@
       font-size: 0.9rem;
     }
 
+    .btn-delete-all-photos {
+      background: #2a2a2a;
+      color: #ff5252;
+      border: 1px solid #444;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      margin-top: 5px;
+      width: 100%;
+    }
+
     .btn-danger {
       background: #2a2a2a;
       color: #ff5252;
@@ -470,7 +481,7 @@
       <div class="photo-thumbnails" id="photo-thumbs-container"></div>
 
       <div class="actions">
-        <button class="btn-primary" onclick="shakeAndDownloadImage(this)">💾 Скачать бланк (Картинкой)</button>
+        <button class="btn-primary" onclick="shakeAndOpenImage(this)">👁️ Посмотреть / Сохранить бланк</button>
         <button class="btn-danger" onclick="deleteCurrentBlank()">Удалить текущий бланк</button>
       </div>
 
@@ -489,8 +500,8 @@
   <script>
     const MAX_WINDOWS_PER_BLANK = 6;
     const SIDE_NAMES = ["Верх (1)", "Право (2)", "Низ (3)", "Лево (4)", "Сторона 5"];
-    const DB_KEY = 'tentokno_webview_img_db_v1';
-    const LAST_INDEX_KEY = 'tentokno_webview_img_idx_v1';
+    const DB_KEY = 'tentokno_webview_img_db_v2';
+    const LAST_INDEX_KEY = 'tentokno_webview_img_idx_v2';
 
     function createDefaultWindowItem() {
       return {
@@ -563,23 +574,28 @@
       setTimeout(() => btn.classList.remove('shaking'), 300);
     }
 
-    // Железобетонное скачивание бланка как картинки прямо в приложении без левых редиректов
-    function shakeAndDownloadImage(btn) {
+    // Безопасное открытие готового бланка во вкладке для сохранения без крашей приложения
+    function shakeAndOpenImage(btn) {
       btn.classList.add('shaking');
       renderPhotos();
       draw();
       setTimeout(() => {
         btn.classList.remove('shaking');
         
-        const currentGroup = groupsData[currentGroupIndex];
         const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-        
-        const a = document.createElement('a');
-        a.href = dataUrl;
-        a.download = `Blank_${currentGroup.uid}.jpg`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        const win = window.open('', '_blank');
+        if (win) {
+          win.document.write(`
+            <html>
+              <head><title>Бланк замера</title></head>
+              <body style="margin:0; background:#000; display:flex; justify-content:center; align-items:center; height:100vh;">
+                <img src="${dataUrl}" style="max-width:100%; height:auto;" alt="Бланк">
+              </body>
+            </html>
+          `);
+        } else {
+          window.location.href = dataUrl;
+        }
       }, 300);
     }
 
